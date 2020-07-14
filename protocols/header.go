@@ -1,6 +1,6 @@
 package protocols
 
-import "ecs/utils"
+import "yoyoecs/utils"
 
 // Flag ８bit
 //  ____________________________________________

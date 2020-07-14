@@ -1,11 +1,11 @@
-package ecs
+package yoyoecs
 
 import (
 	"errors"
 	"fmt"
 	"net"
 	"sync"
-	"ecs/protocols"
+	"yoyoecs/protocols"
 )
 
 type ServerSocket struct {
