@@ -5,7 +5,7 @@ import (
 	"net"
 	"sync"
 	"time"
-	"yoyoecs/protocols"
+	"github.com/fengyily/yoyoecs/protocols"
 )
 
 type ClientSocket struct {

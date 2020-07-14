@@ -1,6 +1,6 @@
 package protocols
 
-import "yoyoecs/utils"
+import "github.com/fengyily/yoyoecs/utils"
 
 // Flag ８bit
 //  ____________________________________________

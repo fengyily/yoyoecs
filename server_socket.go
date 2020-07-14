@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
-	"yoyoecs/protocols"
+	"github.com/fengyily/yoyoecs/protocols"
 )
 
 type ServerSocket struct {
