@@ -89,7 +89,7 @@ func (cs *ClientSocket) ReConn() (err error) {
 			time.Sleep(5 * time.Second)
 			continue
 		} else {
-			cs.OnConnect("连接成功。")
+			cs.OnConnect("连接成功。", cs)
 			//cs.Register()
 			cs.IsConnected = true
 			break
