@@ -13,7 +13,7 @@ type ClientSocket struct {
 	IsConnected   bool
 	ipAddress     string
 	conn          net.Conn
-	OnConnect     func(string)
+	OnConnect     func(string, *ClientSocket)
 	OnRecvMessage func(protocols.Header, []byte, *ClientSocket)
 	OnClose       func(string)
 	OnError       func(*ClientSocket)
@@ -54,7 +54,7 @@ func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 		} else {
 			fmt.Println("success")
 			if cs.OnConnect != nil {
-				cs.OnConnect("连接成功。")
+				cs.OnConnect("连接成功。", cs)
 			}
 
 			//cs.Register()
