@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+
 	"github.com/fengyily/yoyoecs/protocols"
 )
 
@@ -12,7 +13,7 @@ type ServerSocket struct {
 	conn      net.Conn
 	ipAddress string
 
-	OnConnect     func(string)
+	OnConnect     func(string, *ClientSocket)
 	OnRecvMessage func(protocols.Header, []byte, *ClientSocket)
 	OnClose       func(string)
 	OnError       func(*ClientSocket)
@@ -50,21 +51,18 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 			fmt.Println(client.RemoteAddr().String(), "连接成功。")
 
 			c := &ClientSocket{
-				OnRecvMessage: func(header protocols.Header, data []byte, cs *ClientSocket) {
-					if server.OnRecvMessage != nil {
-						server.OnRecvMessage(header, data, cs)
-					}
-				},
+				OnRecvMessage: server.OnRecvMessage,
 				OnError: func(cs *ClientSocket) {
 					if server.OnError != nil {
 						server.OnError(cs)
 					}
+					fmt.Println("OnError")
 				},
 			}
 			c.FormConn(&client)
 
 			if server.OnConnect != nil {
-				server.OnConnect(client.RemoteAddr().String())
+				server.OnConnect(client.RemoteAddr().String(), c)
 			}
 		}
 	}()

@@ -1,6 +1,10 @@
 package protocols
 
-import "github.com/fengyily/yoyoecs/utils"
+import (
+	"fmt"
+
+	"github.com/fengyily/yoyoecs/utils"
+)
 
 // Flag ８bit
 //  ____________________________________________
@@ -34,7 +38,7 @@ type Header struct {
 
 func (header *Header) ToBytes() []byte {
 	var data []byte
-	if header.Cmd == REQUEST_HEARTBEAT || header.Cmd == RESPONSE_HEARTBEAT || header.Cmd == RESPONSE_REGISTER_SUCCESS {
+	if header.Cmd == REQUEST_HEARTBEAT || header.Cmd == RESPONSE_HEARTBEAT {
 		data = make([]byte, 1)
 		data[0] = byte(header.Cmd)
 	} else {
@@ -42,9 +46,18 @@ func (header *Header) ToBytes() []byte {
 		data[0] = byte(header.Cmd)
 		data[1] = header.Flag
 
-		data = append(data, utils.Uint16ToBytes(header.Length)...)
+		//data = append(data, utils.Uint16ToBytes(header.Length)...)
+		copy(&data, 2, utils.Uint16ToBytes(header.Length), 0, 2)
+		fmt.Println("cmd", header.Cmd, "length", header.Length)
 	}
 	return data
+}
+
+func copy(desc *[]byte, index int, src []byte, startIndex int, length int) {
+	for i := startIndex; i < startIndex+length; i++ {
+		(*desc)[index] = src[i]
+		index++
+	}
 }
 
 func LoadHeader(buffer *[]byte) (ok bool, header Header) {
@@ -53,7 +66,6 @@ func LoadHeader(buffer *[]byte) (ok bool, header Header) {
 		i := 0
 		header.Cmd = Command((*buffer)[i])
 		if header.Cmd == REQUEST_HEARTBEAT ||
-			header.Cmd == RESPONSE_REGISTER_SUCCESS ||
 			header.Cmd == RESPONSE_HEARTBEAT {
 			*buffer = (*buffer)[i+1:]
 			return ok, header
@@ -70,13 +82,13 @@ func LoadHeader(buffer *[]byte) (ok bool, header Header) {
 				}
 			}
 			*buffer = (*buffer)[i+rIndex:]
-			//fmt.Println("未识别的指令", rIndex, len(*buffer))
+			fmt.Println("未识别的指令", rIndex, len(*buffer))
 			continue
 		}
 
 		// 是否满足正常包的一个头部
 		if total < i+HEADER_LENGTH {
-			//fmt.Println("len(cs.Buffer) < i+3")
+			fmt.Println("len(cs.Buffer) < i+3")
 			return false, header
 		}
 		header.Flag = (*buffer)[1]

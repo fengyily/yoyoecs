@@ -1,6 +1,9 @@
 package protocols
 
-import "strconv"
+import (
+	"reflect"
+	"strconv"
+)
 
 //  Command 消息指令
 //  __________________________________________________________
@@ -37,16 +40,8 @@ const (
 
 // 判断是否是定义的指令
 func (cmd Command) IsCommandType(c byte) bool {
-	return c == byte(RESPONSE_HEARTBEAT) ||
-		c == byte(REQUEST_REGISTER) ||
-		c == byte(RESPONSE_REGISTER_SUCCESS) ||
-		c == byte(RESPONSE_REGISTER_FAILED) ||
-		c == byte(REQUEST_TRANS_SKU_DATA) ||
-		c == byte(RESPONSE_TRANS_SKU_DATA) ||
-		c == byte(REQUEST_TRANS_ITEM_DATA) ||
-		c == byte(RESPONSE_TRANS_ITEM_DATA) ||
-		c == byte(REQUEST_UPLOAD_SKU_DATA) ||
-		c == byte(RESPONSE_UPLOAD_SKU_DATA)
+	tmp := Command(c)
+	return reflect.TypeOf(tmp) == reflect.TypeOf(RESPONSE_HEARTBEAT)
 }
 
 func (cmd Command) ToString() string {

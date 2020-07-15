@@ -5,6 +5,7 @@ import (
 	"net"
 	"sync"
 	"time"
+
 	"github.com/fengyily/yoyoecs/protocols"
 )
 
@@ -39,9 +40,7 @@ func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 	cs.DataChan = make(chan []byte, 1000)
 	cs.Buffer = make([]byte, 0)
 	cs.IsConnected = false
-	cs.OnError = func(cs *ClientSocket) {
-		cs.ReConn()
-	}
+	
 	for {
 		cs.ipAddress = ipAddress
 		cs.conn, err = net.Dial("tcp", ipAddress)
@@ -69,13 +68,14 @@ func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 	return
 }
 
-func (cs *ClientSocket) ReConn() (err error) {
-	cs.ReConnLock.Lock()
-	defer cs.ReConnLock.Unlock()
-
+func (cs *ClientSocket) checkConn() (err error) {
 	if cs.IsConnected {
 		return
 	}
+
+	cs.ReConnLock.Lock()
+	defer cs.ReConnLock.Unlock()
+
 	cs.DataChan = make(chan []byte, 1000)
 	cs.Buffer = cs.Buffer[len(cs.Buffer):]
 	for {
@@ -90,7 +90,6 @@ func (cs *ClientSocket) ReConn() (err error) {
 			continue
 		} else {
 			cs.OnConnect("连接成功。", cs)
-			//cs.Register()
 			cs.IsConnected = true
 			break
 		}
@@ -98,17 +97,13 @@ func (cs *ClientSocket) ReConn() (err error) {
 	return
 }
 
-// func (cs *ClientSocket) Register() {
-// 	info := transproto.EdgeRegister{}
-// 	info.CompanyID = edgeConfig.NConfig.GetCompanyID()
-// 	info.ShopCode = edgeConfig.NConfig.GetShopCode()
-// 	d, _ := json.Marshal(info)
-// 	cs.SendMessage(transproto.REQUEST_REGISTER, 0, d)
-// }
-
 func (cs *ClientSocket) HeartBeat() {
 	go func() {
 		for {
+			if !cs.IsConnected {
+				fmt.Println("连接已断开，尝试重连中")
+				cs.checkConn()
+			}
 			cs.SendMessage(protocols.REQUEST_HEARTBEAT, 0, nil)
 			time.Sleep(5 * time.Second)
 		}
@@ -116,8 +111,11 @@ func (cs *ClientSocket) HeartBeat() {
 }
 
 func (cs *ClientSocket) connerror(err error) {
-	cs.conn.Close()
-	fmt.Println("连接断开")
+	if cs.conn != nil {
+		cs.conn.Close()
+		fmt.Println("连接断开")
+	}
+
 	cs.IsConnected = false
 	if cs.OnError != nil {
 		cs.OnError(cs)
@@ -125,7 +123,8 @@ func (cs *ClientSocket) connerror(err error) {
 }
 
 func (cs *ClientSocket) read() {
-	data := make([]byte, 1024)
+	fmt.Println("进入循环读")
+	data := make([]byte, 4096)
 	for {
 		if !cs.IsConnected {
 			time.Sleep(5 * time.Second)
@@ -141,7 +140,7 @@ func (cs *ClientSocket) read() {
 			// merge buffer
 			if n > 0 {
 				// 加上缓冲区的数据
-				//befor := len(cs.Buffer)
+				// befor := len(cs.Buffer)
 				cs.Buffer = append(cs.Buffer, data[:n]...)
 				//fmt.Println("原缓存右有", befor, "这次又读了", n, "befor string=", string(cs.Buffer[:befor]), "merge string=", string(data[0:n]))
 			}
@@ -152,6 +151,8 @@ func (cs *ClientSocket) read() {
 				if !ok {
 					fmt.Println("加载头部失败。。。")
 					break
+				} else {
+					//fmt.Println("加载头部成功：", header.Length, header.Cmd)
 				}
 
 				if header.Cmd == protocols.REQUEST_HEARTBEAT {
@@ -162,24 +163,22 @@ func (cs *ClientSocket) read() {
 				} else if header.Cmd == protocols.RESPONSE_HEARTBEAT {
 					fmt.Println("收到心跳回复。")
 					continue
-				} else if header.Cmd == protocols.RESPONSE_REGISTER_SUCCESS {
-					fmt.Println("注册成功。")
-					continue
 				} else {
 					total := len(cs.Buffer)
-					if header.Length == 0 {
-						// fmt.Println("指令对应的长度不对，重新定位丢弃１", string(cs.Buffer))
-						// cs.Buffer = cs.Buffer[i+1:]
-						// fmt.Println("length", header.Length, "len(cs.Buffer)", len(cs.Buffer), "i", i, "cmd", header.Cmd.ToString())
+					// if header.Length == 0 {
+					// 	//fmt.Println("指令对应的长度不对，重新定位丢弃１", string(cs.Buffer))
+					// 	// cs.Buffer = cs.Buffer[i+1:]
+					// 	// fmt.Println("length", header.Length, "len(cs.Buffer)", len(cs.Buffer), "i", i, "cmd", header.Cmd.ToString())
 
-						continue
-					}
+					// 	continue
+					// }
 
 					// 判断剩余长度是否满足头部描述长度。
 					balance := total - i - protocols.HEADER_LENGTH
 
 					if balance >= int(header.Length) {
-
+						//fmt.Println(cs.OnRecvMessage)
+						//fmt.Println(cs.Buffer[i+protocols.HEADER_LENGTH:i+protocols.HEADER_LENGTH+int(header.Length)])
 						if cs.OnRecvMessage != nil {
 							cs.OnRecvMessage(header, cs.Buffer[i+protocols.HEADER_LENGTH:i+protocols.HEADER_LENGTH+int(header.Length)], cs)
 						}
@@ -188,7 +187,7 @@ func (cs *ClientSocket) read() {
 						continue
 					} else {
 						// 如果不够一个完整的包，存入缓冲区
-						//fmt.Println("不够一个完整的包，存入缓冲区", "总共：", total, "内容是：", string(cs.Buffer[HEADER_LENGTH:total]), "剩余：", balance, "包体长度是：", header.Length, i)
+						//fmt.Println("不够一个完整的包，存入缓冲区", "总共：", total, "内容是：", string(cs.Buffer[protocols.HEADER_LENGTH:total]), "剩余：", balance, "包体长度是：", header.Length, i)
 						break
 					}
 				}
@@ -198,6 +197,7 @@ func (cs *ClientSocket) read() {
 			continue
 		}
 	}
+	fmt.Println("退出了循环读")
 }
 
 func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag byte, body []byte) (err error) {
@@ -213,8 +213,10 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag byte, body []byt
 		header.Length = uint16(len(body))
 		data = header.ToBytes()
 		data = append(data, body...)
+		fmt.Println("SendMessage cmd", cmd, "length", header.Length, len(data))
 	} else {
 		data = header.ToBytes()
+		fmt.Println("SendMessage cmd", cmd, "length nil", header.Length, len(data))
 	}
 
 	err = cs.SendData(data)
