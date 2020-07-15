@@ -65,6 +65,7 @@ func LoadHeader(buffer *[]byte) (ok bool, header Header) {
 	for total := len(*buffer); total > 0; total = len(*buffer) {
 		i := 0
 		header.Cmd = Command((*buffer)[i])
+		// 心跳包相关的是1字节长度，正常包为>=4字节，接受body为0的包
 		if header.Cmd == REQUEST_HEARTBEAT ||
 			header.Cmd == RESPONSE_HEARTBEAT {
 			*buffer = (*buffer)[i+1:]

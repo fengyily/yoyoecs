@@ -10,6 +10,7 @@ import (
 )
 
 type ClientSocket struct {
+	isReConnect bool
 	ConnectId     string
 	IsConnected   bool
 	ipAddress     string
@@ -26,12 +27,18 @@ type ClientSocket struct {
 	Buffer       []byte
 	RunHeartBeat sync.Once
 	IsConnecting bool
+	OnlineTime time.Time
 	ReConnLock   sync.Mutex
 	sendLock     sync.Mutex
 }
 
+func (cs *ClientSocket) GetConn() (conn *net.Conn) {
+	return &cs.conn
+}
+
 func (cs *ClientSocket) FormConn(conn *net.Conn) {
 	cs.IsConnected = true
+	cs.isReConnect = false
 	cs.conn = *conn
 	go cs.read()
 }
@@ -40,7 +47,7 @@ func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 	cs.DataChan = make(chan []byte, 1000)
 	cs.Buffer = make([]byte, 0)
 	cs.IsConnected = false
-	
+	cs.isReConnect = true
 	for {
 		cs.ipAddress = ipAddress
 		cs.conn, err = net.Dial("tcp", ipAddress)
@@ -102,7 +109,12 @@ func (cs *ClientSocket) HeartBeat() {
 		for {
 			if !cs.IsConnected {
 				fmt.Println("连接已断开，尝试重连中")
-				cs.checkConn()
+				if cs.isReConnect {
+					cs.checkConn()
+				} else {
+					break
+				}
+				
 			}
 			cs.SendMessage(protocols.REQUEST_HEARTBEAT, 0, nil)
 			time.Sleep(5 * time.Second)
@@ -129,13 +141,21 @@ func (cs *ClientSocket) read() {
 		if !cs.IsConnected {
 			time.Sleep(5 * time.Second)
 			fmt.Println("连接断开")
-			continue
+			if cs.isReConnect {
+				continue
+			} else {
+				break
+			}
 		}
 		if cs.conn != nil {
 			n, err := cs.conn.Read(data)
 			if err != nil {
 				cs.connerror(err)
-				continue
+				if cs.isReConnect {
+					continue
+				} else {
+					break
+				}
 			}
 			// merge buffer
 			if n > 0 {
@@ -159,6 +179,9 @@ func (cs *ClientSocket) read() {
 					// 收到心跳包，马上回复一个
 					go cs.SendMessage(protocols.RESPONSE_HEARTBEAT, 0, nil)
 					//cs.Buffer = cs.Buffer[i+1:]
+					if cs.OnRecvMessage != nil {
+						cs.OnRecvMessage(header, nil, cs)
+					}
 					continue
 				} else if header.Cmd == protocols.RESPONSE_HEARTBEAT {
 					fmt.Println("收到心跳回复。")

@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/fengyily/yoyoecs/protocols"
 )
 
+//　ServerSocket　服务端连接对象
 type ServerSocket struct {
-	conn      net.Conn
-	ipAddress string
+	shutdown bool
+	conn *net.TCPListener
 
 	OnConnect     func(string, *ClientSocket)
 	OnRecvMessage func(protocols.Header, []byte, *ClientSocket)
@@ -20,14 +22,14 @@ type ServerSocket struct {
 	OnRecvError   func(error)
 	OnSendError   func(error)
 
+	// 广播消息时的队列
 	DataChan chan []byte
-	Buffer   []byte
 
 	Clients   map[string]*ClientSocket
 	cloneLock sync.Mutex
 }
 
-// Run("*:9091")
+// Run("*:9091")　开始监听端口，等待边缘端连接
 func (server *ServerSocket) Run(address string) (ok bool, err error) {
 	server.DataChan = make(chan []byte, 1000)
 	server.Clients = make(map[string]*ClientSocket)
@@ -36,14 +38,18 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 		return false, err
 	}
 
-	conn, err := net.ListenTCP("tcp", tcpAddr)
+	server.conn, err = net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
 		return false, err
 	}
 	go server.send()
+	
 	go func() {
 		for {
-			client, err := conn.Accept()
+			if server.shutdown {
+				break
+			}
+			client, err := server.conn.Accept()
 			if err != nil {
 				fmt.Println("error", err)
 				continue
@@ -65,11 +71,13 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 				server.OnConnect(client.RemoteAddr().String(), c)
 			}
 		}
+		fmt.Println("退出。。。")
 	}()
 
 	return true, nil
 }
 
+//　RemoveClient　将端从列表中移除
 func (server *ServerSocket) RemoveClient(clientId string) {
 	server.cloneLock.Lock()
 	defer server.cloneLock.Unlock()
@@ -84,13 +92,27 @@ func (server *ServerSocket) RemoveClient(clientId string) {
 	}
 }
 
-func (server *ServerSocket) AddClient(clientId string, cs *ClientSocket) {
+func (server *ServerSocket) ClientOnline(clientId string, cs *ClientSocket) {
 	server.cloneLock.Lock()
 	defer server.cloneLock.Unlock()
 
-	server.Clients[clientId] = cs
+	cs.OnlineTime = time.Now()
+	
+	if server.Clients != nil {
+		server.Clients[clientId] = cs
+	}
 }
 
+// AddClient 将端添加到列表中
+func (server *ServerSocket) AddClient(clientId string, cs *ClientSocket) {
+	server.cloneLock.Lock()
+	defer server.cloneLock.Unlock()
+	if server.Clients != nil {
+		server.Clients[clientId] = cs
+	}
+}
+
+// SendMessage　给所有的端点发送消息
 func (server *ServerSocket) SendMessage(header protocols.Header, data []byte) {
 	if data != nil {
 		header.Length = uint16(len(data))
@@ -107,16 +129,20 @@ func (server *ServerSocket) SendMessage(header protocols.Header, data []byte) {
 func (server *ServerSocket) send() {
 	for {
 		data := <-server.DataChan
+		if server.shutdown {
+			break
+		}
 		go func() {
 			clis := server.cloneTags(server.Clients)
 			for _, c := range clis {
 				fmt.Println("开始发送数据")
-				c.SendData(data)
+				go c.SendData(data)
 			}
 		}()
 	}
 }
 
+// SendByClientId 发送给某一个边缘端
 func (server *ServerSocket) SendByClientId(clientId string, cmd protocols.Command, flag uint8, data []byte) (err error) {
 	client, ok := server.Clients[clientId]
 	if ok {
@@ -147,4 +173,30 @@ func (server *ServerSocket) cloneTags(tags map[string]*ClientSocket) map[string]
 		cloneTags[k] = v
 	}
 	return cloneTags
+}
+
+func (server *ServerSocket) Close() (err error) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("Close")
+		}
+	}()
+	server.shutdown = true
+	if server.conn != nil {
+	err = server.conn.Close()
+	fmt.Println(err)
+	} else {
+		fmt.Println(server.conn)
+	}
+	for _, v := range server.Clients {
+		v.conn.Close()
+	}
+	server.conn = nil
+	if err != nil {
+		fmt.Println("连接关闭失败。", err)
+	}
+	fmt.Println("连接关闭成功。")
+	server.Clients = nil
+	close(server.DataChan)
+	return
 }

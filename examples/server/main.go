@@ -19,6 +19,9 @@ func main() {
 	}
 	server.OnRecvMessage = func(header protocols.Header, data []byte, cs *yoyoecs.ClientSocket) {
 		fmt.Println("收到消息", header.Cmd, "Length", header.Length)
+		if header.Cmd == protocols.REQUEST_HEARTBEAT {
+			server.ClientOnline(cs.ConnectId, cs)
+		}
 		if header.Cmd == protocols.REQUEST_REGISTER {
 			server.AddClient(cs.ConnectId, cs)
 			cs.SendMessage(protocols.RESPONSE_REGISTER_SUCCESS, 0, []byte("你注册成功了。"))
@@ -30,8 +33,11 @@ func main() {
 	}
 
 	server.Run(":9091")
-
 	fmt.Println("start success, wait for you connect now.")
+	//<-time.After(10*time.Second)
+
+	//server.Close()
+
 	sw := sync.WaitGroup{}
 	sw.Add(1)
 	sw.Wait()
