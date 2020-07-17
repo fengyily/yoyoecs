@@ -16,6 +16,7 @@ import (
 var sendLock sync.Mutex
 
 func main() {
+	TestCompress()
 	client := yoyoecs.ClientSocket{}
 	client.OnConnError = func(err error) {
 		fmt.Println("on connect error ", err)
@@ -31,7 +32,7 @@ func main() {
 		if header.Cmd == protocols.RESPONSE_REGISTER_SUCCESS {
 			fmt.Println("收到注册成功消息")
 
-			test(cs.GetConn())
+			test(cs)
 		}
 	}
 
@@ -44,9 +45,9 @@ func main() {
 		}
 		info := EdgeRegister{}
 		info.CompanyID = 123456789
-		info.ShopCode = "shopcode123456789"
+		info.ShopCode = "shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈"
 		d, _ := json.Marshal(info)
-		client.SendMessage(protocols.REQUEST_REGISTER, 0, d)
+		client.SendMessage(protocols.REQUEST_REGISTER, byte(protocols.HEADER_FLAG_IS_COMPRESS), d)
 		fmt.Println("发起了注册申请")
 	}
 	client.Conn("127.0.0.1:9091")
@@ -56,24 +57,24 @@ func main() {
 	sw.Wait()
 }
 
-func test(client *net.Conn) {
-	
-	go func(client *net.Conn) {
-		
+func test(client *yoyoecs.ClientSocket) {
+
+	go func(client *yoyoecs.ClientSocket) {
+
 		index := 1
 		n := 0
 		for i := 1; i <= 100; i++ {
 			for j := 1; j <= 100; j++ {
-				
+
 				index++
-				SendMessage(client, protocols.RESPONSE_TRANS_SKU_DATA, []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，第"+strconv.Itoa(i)+" 轮测试"))
+				client.SendMessage(protocols.RESPONSE_TRANS_SKU_DATA, byte(protocols.HEADER_FLAG_IS_COMPRESS), []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈第"+strconv.Itoa(i)+" 轮测试"))
 				if n%20 == 0 {
 					index++
-					SendSplitMessage(client, protocols.REQUEST_UPLOAD_SKU_DATA, []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，第"+strconv.Itoa(i)+" 批分裂消息"))
+					SendSplitMessage(client.GetConn(), protocols.REQUEST_UPLOAD_SKU_DATA, []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，第"+strconv.Itoa(i)+" 批分裂消息"))
 				}
 				if n%100 == 0 {
 					index++
-					SendBadMessage(client, protocols.REQUEST_UPLOAD_SKU_DATA, []byte("「"+strconv.Itoa(index)+"」这是一条坏消息，它将影响下一条消息。就看你的程序会不会识别，不要影响下下条消息。。。。"))
+					SendBadMessage(client.GetConn(), protocols.REQUEST_UPLOAD_SKU_DATA, []byte("「"+strconv.Itoa(index)+"」这是一条坏消息，它将影响下一条消息。就看你的程序会不会识别，不要影响下下条消息。。。。"))
 				}
 				n++
 			}
@@ -85,14 +86,14 @@ func test(client *net.Conn) {
 
 //正常包发送测试
 func SendMessage(conn *net.Conn, cmd protocols.Command, body []byte) (err error) {
-	defer func(){
+	defer func() {
 		recover()
 	}()
 	sendLock.Lock()
 	defer sendLock.Unlock()
 	data := make([]byte, 2)
 	data[0] = byte(cmd)
-	data[1] = 2
+	data[1] = 0
 	(*conn).Write(data)
 	if body != nil {
 		(*conn).Write(utils.Uint16ToBytes(uint16(len(body))))
@@ -115,7 +116,7 @@ func SendSplitMessage(conn *net.Conn, cmd protocols.Command, body []byte) (err e
 	defer sendLock.Unlock()
 	data := make([]byte, 2)
 	data[0] = byte(cmd)
-	data[1] = 2
+	data[1] = 0
 	(*conn).Write(data)
 	if body != nil {
 		(*conn).Write(utils.Uint16ToBytes(uint16(len(body))))
@@ -138,7 +139,7 @@ func SendBadMessage(conn *net.Conn, cmd protocols.Command, body []byte) (err err
 	defer sendLock.Unlock()
 	data := make([]byte, 2)
 	data[0] = byte(cmd)
-	data[1] = 2
+	data[1] = 0
 	(*conn).Write(data)
 	if body != nil {
 		(*conn).Write(utils.Uint16ToBytes(uint16(len(body))))
@@ -146,4 +147,17 @@ func SendBadMessage(conn *net.Conn, cmd protocols.Command, body []byte) (err err
 		(*conn).Write(body[0 : len(body)-5])
 	}
 	return
+}
+
+func TestCompress() {
+
+	befor := []byte("这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的")
+	after := utils.Compress(befor)
+	println("befor", len(befor))
+
+	println("after", len(after), string(after))
+
+	out := utils.UnCompress(after)
+
+	println("out", string(out))
 }

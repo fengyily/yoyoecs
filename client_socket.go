@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/fengyily/yoyoecs/protocols"
+	"github.com/fengyily/yoyoecs/utils"
 )
 
 type ClientSocket struct {
-	isReConnect bool
+	isReConnect   bool
 	ConnectId     string
 	IsConnected   bool
 	ipAddress     string
@@ -27,7 +28,7 @@ type ClientSocket struct {
 	Buffer       []byte
 	RunHeartBeat sync.Once
 	IsConnecting bool
-	OnlineTime time.Time
+	OnlineTime   time.Time
 	ReConnLock   sync.Mutex
 	sendLock     sync.Mutex
 }
@@ -114,7 +115,7 @@ func (cs *ClientSocket) HeartBeat() {
 				} else {
 					break
 				}
-				
+
 			}
 			cs.SendMessage(protocols.REQUEST_HEARTBEAT, 0, nil)
 			time.Sleep(5 * time.Second)
@@ -202,11 +203,22 @@ func (cs *ClientSocket) read() {
 					if balance >= int(header.Length) {
 						//fmt.Println(cs.OnRecvMessage)
 						//fmt.Println(cs.Buffer[i+protocols.HEADER_LENGTH:i+protocols.HEADER_LENGTH+int(header.Length)])
-						if cs.OnRecvMessage != nil {
-							cs.OnRecvMessage(header, cs.Buffer[i+protocols.HEADER_LENGTH:i+protocols.HEADER_LENGTH+int(header.Length)], cs)
-						}
+
 						// 收完后，直接处理缓存内容
+						data := cs.Buffer[i+protocols.HEADER_LENGTH : i+protocols.HEADER_LENGTH+int(header.Length)]
 						cs.Buffer = cs.Buffer[i+protocols.HEADER_LENGTH+int(header.Length):]
+						if cs.OnRecvMessage != nil {
+							if protocols.Flag(header.Flag)&protocols.HEADER_FLAG_IS_COMPRESS > 0 {
+
+								fmt.Println("开启了压缩,解压前", len(data))
+								data = utils.UnCompress(data)
+								fmt.Println("开启了压缩,解压后", len(data))
+								header.Length = uint16(len(data))
+							}
+							cs.OnRecvMessage(header, data, cs)
+
+						}
+
 						continue
 					} else {
 						// 如果不够一个完整的包，存入缓冲区
@@ -233,6 +245,12 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag byte, body []byt
 
 	var data []byte
 	if body != nil {
+		if protocols.HEADER_FLAG_IS_COMPRESS&protocols.Flag(flag) > 0 {
+			fmt.Println("开启了压缩,压缩前", len(body))
+			body = utils.Compress(body)
+			fmt.Println("开启了压缩,压缩后", len(body))
+		}
+
 		header.Length = uint16(len(body))
 		data = header.ToBytes()
 		data = append(data, body...)
