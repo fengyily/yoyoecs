@@ -9,7 +9,9 @@ import (
 
 func Compress(gbk []byte) []byte {
 	defer func() {
-		println("Compress", recover())
+		if err := recover(); err != nil {
+			println("Compress", err)
+		}
 	}()
 	//使用gzip压缩
 	var buf bytes.Buffer
@@ -30,7 +32,9 @@ func Compress(gbk []byte) []byte {
 
 func UnCompress(gbk []byte) []byte {
 	defer func() {
-		println("UnCompress", recover())
+		if err := recover(); err != nil {
+			println("UnCompress", err)
+		}
 	}()
 	buf := bytes.NewBuffer(gbk)
 	zr, err := gzip.NewReader(buf)

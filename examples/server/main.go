@@ -5,7 +5,9 @@ import (
 	"sync"
 
 	"github.com/fengyily/yoyoecs"
+	"github.com/fengyily/yoyoecs/protoc"
 	"github.com/fengyily/yoyoecs/protocols"
+	"google.golang.org/protobuf/proto"
 )
 
 func main() {
@@ -23,11 +25,20 @@ func main() {
 			server.ClientOnline(cs.ConnectId, cs)
 		}
 		if header.Cmd == protocols.REQUEST_REGISTER {
+			info := protoc.Register{}
+			proto.Unmarshal(data, &info)
+
 			server.AddClient(cs.ConnectId, cs)
-			cs.SendMessage(protocols.RESPONSE_REGISTER_SUCCESS, 0, []byte("你注册成功了。"))
+			cs.SendMessage(protocols.RESPONSE_REGISTER_SUCCESS, 0, []byte(fmt.Sprintf("%v|%v|%v 你注册成功了。", info.ShopCode, info.IP, info.CompanyID)))
 		}
 		if header.Cmd == protocols.REQUEST_UPLOAD_SKU_DATA {
-			fmt.Println("收到了sku数据", header.Length, cs.ConnectId)
+			if (protocols.Flag(header.Flag) & protocols.HEADER_FLAG_DATA_TYPE_PB) > 0 {
+
+				list := protoc.SkuList{}
+				proto.Unmarshal(data, &list)
+
+				fmt.Println("收到了sku数据", header.Length, cs.ConnectId, list.GetSku())
+			}
 			cs.SendMessage(protocols.RESPONSE_PASSIVE_UPLOAD_SKU_DATA, 0, []byte("收到，请继续发送，如果你还有的话。"))
 		}
 	}

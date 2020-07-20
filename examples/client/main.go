@@ -1,22 +1,24 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/fengyily/yoyoecs"
+	"github.com/fengyily/yoyoecs/protoc"
 	"github.com/fengyily/yoyoecs/protocols"
 	"github.com/fengyily/yoyoecs/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 var sendLock sync.Mutex
 
 func main() {
-	TestCompress()
+	//TestCompress()
 	client := yoyoecs.ClientSocket{}
 	client.OnConnError = func(err error) {
 		fmt.Println("on connect error ", err)
@@ -37,16 +39,19 @@ func main() {
 	}
 
 	client.OnConnect = func(ip string, cs *yoyoecs.ClientSocket) {
-		type EdgeRegister struct {
-			IP        string `json:"ip"`
-			SN        string `json:"sn"`
-			CompanyID int64  `json:"company_id"`
-			ShopCode  string `json:"shop_code"`
-		}
-		info := EdgeRegister{}
+
+		// type EdgeRegister struct {
+		// 	IP        string `json:"ip"`
+		// 	SN        string `json:"sn"`
+		// 	CompanyID int64  `json:"company_id"`
+		// 	ShopCode  string `json:"shop_code"`
+		// }
+		//info := EdgeRegister{}
+		info := protoc.Register{}
 		info.CompanyID = 123456789
 		info.ShopCode = "shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈"
-		d, _ := json.Marshal(info)
+		d, _ := proto.Marshal(&info)
+		//d, _ := json.Marshal(info)
 		client.SendMessage(protocols.REQUEST_REGISTER, byte(protocols.HEADER_FLAG_IS_COMPRESS), d)
 		fmt.Println("发起了注册申请")
 	}
@@ -149,8 +154,7 @@ func SendBadMessage(conn *net.Conn, cmd protocols.Command, body []byte) (err err
 	return
 }
 
-func TestCompress() {
-
+func TestCompress(t *testing.T) {
 	befor := []byte("这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的")
 	after := utils.Compress(befor)
 	println("befor", len(befor))
@@ -160,4 +164,48 @@ func TestCompress() {
 	out := utils.UnCompress(after)
 
 	println("out", string(out))
+}
+
+func TestPB(t *testing.T) {
+	reg := &protoc.Register{}
+
+	reg.SN = "SN00112343"
+	reg.CompanyID = 12345674879
+	reg.ShopCode = "这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的"
+	reg.IP = "127.0.0.1"
+	pbb, _ := proto.Marshal(reg)
+	println("pb序列化之后的长度：", len(pbb))
+
+	outreg := &protoc.Register{}
+	proto.Unmarshal(pbb, outreg)
+	println(outreg.String())
+
+	fmt.Println("pb=", reg.String())
+	if outreg.SN == reg.SN && outreg.CompanyID == reg.CompanyID && outreg.ShopCode == reg.ShopCode {
+		t.Log("TestPB测试通过")
+	} else {
+		t.Error("TestPB测试失败，因为输入与输出不符。")
+	}
+}
+
+func TestPBCompress(t *testing.T) {
+	reg := &protoc.Register{}
+	reg.SN = "SN00112343"
+	reg.CompanyID = 12345674879
+	reg.ShopCode = "这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的"
+	reg.IP = "127.0.0.1"
+	pbb, _ := proto.Marshal(reg)
+	println("pb序列化之后的长度：", len(pbb))
+
+	outreg := &protoc.Register{}
+	proto.Unmarshal(pbb, outreg)
+	println(outreg.String())
+
+	fmt.Println("pb=", reg.String())
+	if outreg.SN == reg.SN && outreg.CompanyID == reg.CompanyID && outreg.ShopCode == reg.ShopCode {
+		t.Log("TestPBCompress测试通过")
+	} else {
+		t.Error("TestPBCompress测试失败，因为输入与输出不符。")
+	}
+
 }

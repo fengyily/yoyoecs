@@ -1,0 +1,17 @@
+syntax ="proto3";
+
+package protoc;
+
+message Sku {
+    int32 Id = 1;
+    string SkuName =2;
+    int64 Price = 3;
+    int64 PriceUnit = 5;
+    string PluCode =6;
+    float Stock = 7;
+    int32 IsOn = 8;
+}
+
+message SkuList {
+    repeated Sku sku = 1;
+}
