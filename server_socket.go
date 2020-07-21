@@ -1,3 +1,23 @@
+/*
+ * @Author: F1
+ * @Date: 2020-07-14 21:16:18
+ * @LastEditors: F1
+ * @LastEditTime: 2020-07-21 11:45:59
+ * @Description:
+ *
+ *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
+ *				核心为三大部分:
+ *					第一部份为协议：protocols中对头部、指令、标识位的定义
+ *
+ *						Header,Command,Flag
+ *
+ *					第二部份是客户端：
+ *						ClientSocket 客户端对象，含连接及连接对象的状态，实现了重连机制，将收、发消息通过事件通知业务端。
+ *
+ *					第三部份是服务端：
+ *						ServerSocket　服务端监听对象，含客户端连接的管理
+ *
+ */
 package yoyoecs
 
 import (
@@ -10,10 +30,19 @@ import (
 	"github.com/fengyily/yoyoecs/protocols"
 )
 
-//　ServerSocket　服务端连接对象
+/**
+ * @Title: ServerSocket
+ * @Description:
+ *
+ * 				服务端监听对象，含客户端连接的管理
+ *				应用场景为，云端启动时，采用该对象对指定端口进行监听，等待客户端来连接
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:18:46
+ */
 type ServerSocket struct {
 	shutdown bool
-	conn *net.TCPListener
+	conn     *net.TCPListener
 
 	OnConnect     func(string, *ClientSocket)
 	OnRecvMessage func(protocols.Header, []byte, *ClientSocket)
@@ -29,7 +58,19 @@ type ServerSocket struct {
 	cloneLock sync.Mutex
 }
 
-// Run("*:9091")　开始监听端口，等待边缘端连接
+/**
+ * @Title:Run
+ * @Description:
+ *
+ *				开始监听端口，等待边缘端连接
+ *				examples:
+ *					- Run("*:9091")　开始监听端口，等待边缘端连接
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:41:22
+ * @Param: address string
+ * @Return: ok bool, err error
+ */
 func (server *ServerSocket) Run(address string) (ok bool, err error) {
 	server.DataChan = make(chan []byte, 1000)
 	server.Clients = make(map[string]*ClientSocket)
@@ -43,7 +84,7 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 		return false, err
 	}
 	go server.send()
-	
+
 	go func() {
 		for {
 			if server.shutdown {
@@ -77,7 +118,16 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 	return true, nil
 }
 
-//　RemoveClient　将端从列表中移除
+/**
+ * @Title: 　RemoveClient
+ * @Description:
+ *
+ *				将端从列表中移除
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:42:47
+ * @Param:clientId string
+ */
 func (server *ServerSocket) RemoveClient(clientId string) {
 	server.cloneLock.Lock()
 	defer server.cloneLock.Unlock()
@@ -92,18 +142,37 @@ func (server *ServerSocket) RemoveClient(clientId string) {
 	}
 }
 
+/**
+ * @Title: ClientOnline
+ * @Description:
+ *
+ *				客户端的在线状态，一般通过心跳来更新
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:42:47
+ * @Param:clientId string, cs *ClientSocket
+ */
 func (server *ServerSocket) ClientOnline(clientId string, cs *ClientSocket) {
 	server.cloneLock.Lock()
 	defer server.cloneLock.Unlock()
 
 	cs.OnlineTime = time.Now()
-	
+
 	if server.Clients != nil {
 		server.Clients[clientId] = cs
 	}
 }
 
-// AddClient 将端添加到列表中
+/**
+ * @Title: AddClient 女
+ * @Description:
+ *
+ *				将端添加到列表中
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:42:47
+ * @Param:clientId string, cs *ClientSocket
+ */
 func (server *ServerSocket) AddClient(clientId string, cs *ClientSocket) {
 	server.cloneLock.Lock()
 	defer server.cloneLock.Unlock()
@@ -112,7 +181,17 @@ func (server *ServerSocket) AddClient(clientId string, cs *ClientSocket) {
 	}
 }
 
-// SendMessage　给所有的端点发送消息
+//
+/**
+ * @Title: SendMessage
+ * @Description:
+ *
+ *				给所有的端点发送消息
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:42:47
+ * @Param:header protocols.Header, data []byte
+ */
 func (server *ServerSocket) SendMessage(header protocols.Header, data []byte) {
 	if data != nil {
 		header.Length = uint16(len(data))
@@ -126,6 +205,12 @@ func (server *ServerSocket) SendMessage(header protocols.Header, data []byte) {
 	}
 }
 
+/**
+ * @Title: send
+ * @Description: 发送，处理等待发送状态
+ * @Author: F1
+ * @Date: 2020-07-21 11:44:57
+ */
 func (server *ServerSocket) send() {
 	for {
 		data := <-server.DataChan
@@ -142,7 +227,17 @@ func (server *ServerSocket) send() {
 	}
 }
 
-// SendByClientId 发送给某一个边缘端
+/**
+ * @Title: SendByClientId
+ * @Description:
+ *
+ *				发送给某一个边缘端
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:45:33
+ * @Param: clientId string, cmd protocols.Command, flag uint8, data []byte
+ * @Return: err error)
+ */
 func (server *ServerSocket) SendByClientId(clientId string, cmd protocols.Command, flag uint8, data []byte) (err error) {
 	client, ok := server.Clients[clientId]
 	if ok {
@@ -183,8 +278,8 @@ func (server *ServerSocket) Close() (err error) {
 	}()
 	server.shutdown = true
 	if server.conn != nil {
-	err = server.conn.Close()
-	fmt.Println(err)
+		err = server.conn.Close()
+		fmt.Println(err)
 	} else {
 		fmt.Println(server.conn)
 	}

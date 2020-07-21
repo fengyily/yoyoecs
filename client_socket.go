@@ -1,3 +1,23 @@
+/*
+ * @Author: F1
+ * @Date: 2020-07-14 21:16:18
+ * @LastEditors: F1
+ * @LastEditTime: 2020-07-21 11:40:55
+ * @Description:
+ *
+ *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
+ *				核心为三大部分:
+ *					第一部份为协议：protocols中对头部、指令、标识位的定义
+ *
+ *						Header,Command,Flag
+ *
+ *					第二部份是客户端：
+ *						ClientSocket 客户端对象，含连接及连接对象的状态，实现了重连机制，将收、发消息通过事件通知业务端。
+ *
+ *					第三部份是服务端：
+ *						ServerSocket　服务端监听对象，含客户端连接的管理
+ *
+ */
 package yoyoecs
 
 import (
@@ -10,6 +30,16 @@ import (
 	"github.com/fengyily/yoyoecs/utils"
 )
 
+/**
+ * @Title: ClientSocket
+ * @Description:
+ *
+ * 				客户端对象，含连接及连接对象的状态，实现了重连机制，将收、发消息通过事件通知业务端。
+ *				应用场景为，边缘端连接云端服务时，采用该对象的Conn。云端服务接收到客户端请求时，采用FormConn初使化该对象与连接对应
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:18:46
+ */
 type ClientSocket struct {
 	isReConnect   bool
 	ConnectId     string
@@ -33,10 +63,30 @@ type ClientSocket struct {
 	sendLock     sync.Mutex
 }
 
+/**
+* @Title: GetConn
+* @Description:
+*
+*				获取连接对象
+*
+* @Author: F1
+* @Date: 2020-07-21 11:23:03
+ * @Return:conn *net.Conn
+*/
 func (cs *ClientSocket) GetConn() (conn *net.Conn) {
 	return &cs.conn
 }
 
+/**
+ * @Title:FormConn
+ * @Description:
+ *
+ *				从连接对象初使化客户端实例，以便于通过客户端实例来实现基于统一协议统收发消息
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:24:09
+ * @Param:conn *net.Conn
+ */
 func (cs *ClientSocket) FormConn(conn *net.Conn) {
 	cs.IsConnected = true
 	cs.isReConnect = false
@@ -44,6 +94,17 @@ func (cs *ClientSocket) FormConn(conn *net.Conn) {
 	go cs.read()
 }
 
+/**
+ * @Title: Conn
+ * @Description:
+ *
+ *				边接服务端
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:25:32
+ * @Param: ipAddress string
+ * @Return: err error
+ */
 func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 	cs.DataChan = make(chan []byte, 1000)
 	cs.Buffer = make([]byte, 0)
@@ -63,8 +124,6 @@ func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 			if cs.OnConnect != nil {
 				cs.OnConnect("连接成功。", cs)
 			}
-
-			//cs.Register()
 			cs.IsConnected = true
 			break
 		}
@@ -76,6 +135,16 @@ func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 	return
 }
 
+/**
+ * @Title: checkConn
+ * @Description:
+ *
+ *				检查连接的状态，如果连接断开，会尝试重新连接，直到重连成功。
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:26:31
+ * @Return: err error
+ */
 func (cs *ClientSocket) checkConn() (err error) {
 	if cs.IsConnected {
 		return
@@ -105,6 +174,15 @@ func (cs *ClientSocket) checkConn() (err error) {
 	return
 }
 
+/**
+ * @Title: HeartBeat
+ * @Description:
+ *
+ *				连接心跳，在连接的情况下，每５秒发送一次心跳，目前暂时是固定的
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:27:44
+ */
 func (cs *ClientSocket) HeartBeat() {
 	go func() {
 		for {
@@ -123,6 +201,16 @@ func (cs *ClientSocket) HeartBeat() {
 	}()
 }
 
+/**
+ * @Title: connerror
+ * @Description:
+ *
+ *				连接异常的处理
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:29:23
+ * @Param:err error
+ */
 func (cs *ClientSocket) connerror(err error) {
 	if cs.conn != nil {
 		cs.conn.Close()
@@ -135,6 +223,17 @@ func (cs *ClientSocket) connerror(err error) {
 	}
 }
 
+/**
+ * @Title: read
+ * @Description:
+ *
+ *				监控连接对象，开启循环读连接对象中的字节流，并解析成标准包输出给业务
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:30:16
+ * @Param:
+ * @Return:
+ */
 func (cs *ClientSocket) read() {
 	fmt.Println("进入循环读")
 	data := make([]byte, 4096)
@@ -235,6 +334,19 @@ func (cs *ClientSocket) read() {
 	fmt.Println("退出了循环读")
 }
 
+/**
+ * @Title: SendMessage
+ * @Description:
+ *
+ *				发送消息，从连接中发送消息
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:31:57
+ * @Param: cmd protocols.Command 指令
+ * @Param: flag byte　标识
+ * @Param: body []byte　包体
+ * @Return:err error
+ */
 func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag byte, body []byte) (err error) {
 	header := protocols.Header{}
 	header.Cmd = cmd
@@ -264,6 +376,17 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag byte, body []byt
 	return
 }
 
+/**
+ * @Title: SendData
+ * @Description:
+ *
+ *				发送数据
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:33:47
+ * @Param:body []byte
+ * @Return:err error
+ */
 func (cs *ClientSocket) SendData(body []byte) (err error) {
 	if cs.conn == nil {
 		cs.connerror(err)
@@ -275,6 +398,8 @@ func (cs *ClientSocket) SendData(body []byte) (err error) {
 
 	total := len(body)
 	index := 0
+
+	// 确保body中的数据全部发送完成。
 	for index < total {
 		send, err := cs.conn.Write(body[index:])
 		if err != nil {

@@ -39,19 +39,10 @@ func main() {
 	}
 
 	client.OnConnect = func(ip string, cs *yoyoecs.ClientSocket) {
-
-		// type EdgeRegister struct {
-		// 	IP        string `json:"ip"`
-		// 	SN        string `json:"sn"`
-		// 	CompanyID int64  `json:"company_id"`
-		// 	ShopCode  string `json:"shop_code"`
-		// }
-		//info := EdgeRegister{}
 		info := protoc.Register{}
 		info.CompanyID = 123456789
 		info.ShopCode = "shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈"
 		d, _ := proto.Marshal(&info)
-		//d, _ := json.Marshal(info)
 		client.SendMessage(protocols.REQUEST_REGISTER, byte(protocols.HEADER_FLAG_IS_COMPRESS), d)
 		fmt.Println("发起了注册申请")
 	}
