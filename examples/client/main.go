@@ -1,3 +1,10 @@
+/*
+ * @Author: F1
+ * @Date: 2020-07-21 11:47:32
+ * @LastEditors: F1
+ * @LastEditTime: 2020-07-22 19:30:40
+ * @Description: 客户端测试
+ */
 package main
 
 import (
@@ -34,17 +41,51 @@ func main() {
 		if header.Cmd == protocols.RESPONSE_REGISTER_SUCCESS {
 			fmt.Println("收到注册成功消息")
 
-			test(cs)
+			//test(cs)
 		}
 	}
 
 	client.OnConnect = func(ip string, cs *yoyoecs.ClientSocket) {
+		// 采用ＰＢ上传ＳＫＵ信息的示例
 		info := protoc.Register{}
 		info.CompanyID = 123456789
 		info.ShopCode = "shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈"
 		d, _ := proto.Marshal(&info)
-		client.SendMessage(protocols.REQUEST_REGISTER, byte(protocols.HEADER_FLAG_IS_COMPRESS), d)
+		client.SendMessage(protocols.REQUEST_REGISTER, protocols.HEADER_FLAG_IS_COMPRESS|protocols.HEADER_FLAG_DATA_TYPE_JSON, d)
 		fmt.Println("发起了注册申请")
+
+		skulist := protoc.SkuList{
+			Sku: make([]*protoc.Sku, 0),
+		}
+
+		for i := 0; i < 200; i++ {
+			sku := &protoc.Sku{}
+			sku.Id = int32(i)
+			sku.SkuName = "skuname" + strconv.Itoa(i)
+			sku.Price = 100
+
+			skulist.Sku = append(skulist.Sku, sku)
+		}
+
+		body, _ := proto.Marshal(&skulist)
+
+		//　采用了pb数据类型，并且开启压缩，如果传输数据较大，建议开启压缩
+		client.SendMessage(protocols.REQUEST_UPLOAD_SKU_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
+
+		item := protoc.ItemList{
+			Items: make([]*protoc.Item, 0),
+		}
+
+		for i := 0; i < 100; i++ {
+			it := protoc.Item{}
+			it.Id = int64(i)
+			it.Name = "测试啊"
+			it.MatchVersionCode = "v1.0.0.1"
+
+			item.Items = append(item.Items, &it)
+		}
+		body, _ = proto.Marshal(&item)
+		client.SendMessage(protocols.REQUEST_TRANS_ITEM_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
 	}
 	client.Conn("127.0.0.1:9091")
 
@@ -63,7 +104,7 @@ func test(client *yoyoecs.ClientSocket) {
 			for j := 1; j <= 100; j++ {
 
 				index++
-				client.SendMessage(protocols.RESPONSE_TRANS_SKU_DATA, byte(protocols.HEADER_FLAG_IS_COMPRESS), []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈第"+strconv.Itoa(i)+" 轮测试"))
+				client.SendMessage(protocols.RESPONSE_TRANS_SKU_DATA, protocols.HEADER_FLAG_IS_COMPRESS, []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈第"+strconv.Itoa(i)+" 轮测试"))
 				if n%20 == 0 {
 					index++
 					SendSplitMessage(client.GetConn(), protocols.REQUEST_UPLOAD_SKU_DATA, []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，第"+strconv.Itoa(i)+" 批分裂消息"))

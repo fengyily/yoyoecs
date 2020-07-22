@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-21 11:12:36
+ * @LastEditTime: 2020-07-21 12:34:02
  * @Description:
  *
  *				协议中通用的一些函数，通常为字节流转常用类型以及常用类型转字节流
@@ -16,7 +16,7 @@ import (
 )
 
 /**
- * @Title:
+ * @Title:Uint16ToBytes
  * @Description:
  *
  * 				将uint16位的数字转成byte，因为yoyoecs的应用场景，限制了单个包的长度不能超过65535，也就是uint16的最大值
@@ -33,7 +33,7 @@ func Uint16ToBytes(data uint16) []byte {
 }
 
 /**
- * @Title:
+ * @Title:BytesToUInt16
  * @Description:
  *
  *				字节流转uint16,默认为大端

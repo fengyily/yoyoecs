@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-21 11:45:59
+ * @LastEditTime: 2020-07-21 12:44:48
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -63,6 +63,7 @@ type ServerSocket struct {
  * @Description:
  *
  *				开始监听端口，等待边缘端连接
+ *
  *				examples:
  *					- Run("*:9091")　开始监听端口，等待边缘端连接
  *
@@ -164,7 +165,7 @@ func (server *ServerSocket) ClientOnline(clientId string, cs *ClientSocket) {
 }
 
 /**
- * @Title: AddClient 女
+ * @Title: AddClient
  * @Description:
  *
  *				将端添加到列表中
@@ -207,7 +208,10 @@ func (server *ServerSocket) SendMessage(header protocols.Header, data []byte) {
 
 /**
  * @Title: send
- * @Description: 发送，处理等待发送状态
+ * @Description:
+ *
+ *				发送，处理等待发送状态
+ *
  * @Author: F1
  * @Date: 2020-07-21 11:44:57
  */
@@ -270,6 +274,16 @@ func (server *ServerSocket) cloneTags(tags map[string]*ClientSocket) map[string]
 	return cloneTags
 }
 
+/**
+* @Title: Close
+* @Description:
+*
+*				关闭监听对象，退出
+*
+* @Author: F1
+* @Date: 2020-07-21 12:32:55
+ * @Return: err error
+*/
 func (server *ServerSocket) Close() (err error) {
 	defer func() {
 		if err := recover(); err != nil {
