@@ -3,7 +3,7 @@ syntax ="proto3";
 package protoc;
 
 message Sku {
-    int32 Id = 1;
+    int64 Id = 1;
     string SkuName =2;
     int64 Price = 3;
     int64 PriceUnit = 5;
