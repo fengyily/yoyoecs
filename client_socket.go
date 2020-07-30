@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-21 12:42:56
+ * @LastEditTime: 2020-07-28 09:29:29
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -350,7 +350,7 @@ func (cs *ClientSocket) read() {
 func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, body []byte) (err error) {
 	header := protocols.Header{}
 	header.Cmd = cmd
-	header.Flag = uint8(flag)
+	header.Flag = flag
 	if len(body) > 2<<15 {
 		panic(fmt.Sprintf("超出可接收长度。len(body):%d > %d", len(body), 2<<15))
 	}

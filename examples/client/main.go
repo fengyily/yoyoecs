@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2020-07-22 19:30:40
+ * @LastEditTime: 2020-07-30 15:22:12
  * @Description: 客户端测试
  */
 package main
@@ -86,6 +86,19 @@ func main() {
 		}
 		body, _ = proto.Marshal(&item)
 		client.SendMessage(protocols.REQUEST_TRANS_ITEM_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
+
+		yoyoList := protoc.YoyoInfoList{
+			YoyoInfo: make([]*protoc.YoyoInfo, 0),
+		}
+		for i := 0; i < 100; i++ {
+			yoyoInfo := protoc.YoyoInfo{}
+			yoyoInfo.Name = "Name" + strconv.Itoa(i)
+
+			yoyoList.YoyoInfo = append(yoyoList.YoyoInfo, &yoyoInfo)
+		}
+		body, _ = proto.Marshal(&yoyoList)
+		client.SendMessage(protocols.REQUEST_TRANS_YOYOINFO_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
+
 	}
 	client.Conn("127.0.0.1:9091")
 
@@ -94,6 +107,20 @@ func main() {
 	sw.Wait()
 }
 
+/**
+ * @Title:
+ * @Description:
+ *
+ * 					测试各种情况包的发送：
+ * 					- 大包（超出缓存区的包），用以测试分包接收是否正常
+ *					- 分包（一个完整的包，分两次发送），用以测试并包是否正常
+ *					- 异常包（不完整的包），用以测试是否能重新定位包
+ *
+ * @Author: F1
+ * @Date: 2020-07-28 09:30:42
+ * @Param:
+ * @Return:
+ */
 func test(client *yoyoecs.ClientSocket) {
 
 	go func(client *yoyoecs.ClientSocket) {
@@ -186,6 +213,17 @@ func SendBadMessage(conn *net.Conn, cmd protocols.Command, body []byte) (err err
 	return
 }
 
+/**
+ * @Title:TestCompress　测试包的压缩
+ * @Description:
+ *
+ *					测试包的压缩
+ *
+ * @Author: F1
+ * @Date: 2020-07-28 09:33:46
+ * @Param:
+ * @Return:
+ */
 func TestCompress(t *testing.T) {
 	befor := []byte("这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的")
 	after := utils.Compress(befor)

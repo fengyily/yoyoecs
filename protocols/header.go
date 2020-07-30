@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-21 11:02:16
+ * @LastEditTime: 2020-07-30 14:58:06
  * @Description: 协议包中的头部相关定义
  */
 package protocols
@@ -21,13 +21,14 @@ import (
  *				Encrytion 第４位表示数据包是否加密
  *				COMPRESS 第５位表示数据包是否开启了压缩
  * 				第６到８位为扩展备用位
- *  ____________________________________________
- * | DataType  | Encrytion |COMPRESS|ext|ext|ext|
- * |-----------|-----------|--------|---|---|---|
- * | 3 bit     | 1 bit     | 1 bit  | 1 | 1 | 1 |
- * |-----------|-----------|--------|---|---|---|
- * |[0] [1] [2]|    [3]    |   [4]  |[5]|[6]|[7]|
- * |____________________________________________|
+ * 				  ____________________________________________
+ * 				 | DataType  | Encrytion |COMPRESS|ext|ext|ext|
+ * 				 |-----------|-----------|--------|---|---|---|
+ * 				 | 3 bit     | 1 bit     | 1 bit  | 1 | 1 | 1 |
+ * 				 |-----------|-----------|--------|---|---|---|
+ * 				 |[0] [1] [2]|    [3]    |   [4]  |[5]|[6]|[7]|
+ * 				 |____________________________________________|
+ *
  * @Author: F1
  * @Date: 2020-07-21 10:55:39
  * @Param:
@@ -63,7 +64,7 @@ const (
  */
 type Header struct {
 	Cmd    Command
-	Flag   uint8
+	Flag   Flag
 	Length uint16
 }
 
@@ -83,7 +84,7 @@ func (header *Header) ToBytes() []byte {
 	} else {
 		data = make([]byte, HEADER_LENGTH)
 		data[0] = byte(header.Cmd)
-		data[1] = header.Flag
+		data[1] = byte(header.Flag)
 
 		//data = append(data, utils.Uint16ToBytes(header.Length)...)
 		copy(&data, 2, utils.Uint16ToBytes(header.Length), 0, 2)
@@ -134,7 +135,7 @@ func LoadHeader(buffer *[]byte) (ok bool, header Header) {
 			fmt.Println("len(cs.Buffer) < i+3")
 			return false, header
 		}
-		header.Flag = (*buffer)[1]
+		header.Flag = Flag((*buffer)[1])
 		header.Length = utils.BytesToUInt16((*buffer)[2:4])
 
 		break

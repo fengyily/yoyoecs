@@ -2,12 +2,12 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-21 12:44:48
+ * @LastEditTime: 2020-07-28 09:29:40
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
  *				核心为三大部分:
- *					第一部份为协议：protocols中对头部、指令、标识位的定义
+ *					第一部份为协议：ＰＲＯＴＯＣＯＬＳ中对头部、指令、标识位的定义
  *
  *						Header,Command,Flag
  *
@@ -62,10 +62,10 @@ type ServerSocket struct {
  * @Title:Run
  * @Description:
  *
- *				开始监听端口，等待边缘端连接
+ *						开始监听端口，等待边缘端连接
  *
- *				examples:
- *					- Run("*:9091")　开始监听端口，等待边缘端连接
+ *						examples:
+ *							- Run("*:9091")　开始监听端口，等待边缘端连接
  *
  * @Author: F1
  * @Date: 2020-07-21 11:41:22
@@ -123,7 +123,7 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
  * @Title: 　RemoveClient
  * @Description:
  *
- *				将端从列表中移除
+ *							将端从列表中移除
  *
  * @Author: F1
  * @Date: 2020-07-21 11:42:47
@@ -242,7 +242,7 @@ func (server *ServerSocket) send() {
  * @Param: clientId string, cmd protocols.Command, flag uint8, data []byte
  * @Return: err error)
  */
-func (server *ServerSocket) SendByClientId(clientId string, cmd protocols.Command, flag uint8, data []byte) (err error) {
+func (server *ServerSocket) SendByClientId(clientId string, cmd protocols.Command, flag protocols.Flag, data []byte) (err error) {
 	client, ok := server.Clients[clientId]
 	if ok {
 		header := protocols.Header{}

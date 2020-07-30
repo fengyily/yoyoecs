@@ -2,7 +2,7 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2020-07-21 11:07:49
+ * @LastEditTime: 2020-07-30 15:21:46
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
@@ -43,11 +43,13 @@ const (
 	REQUEST_TRANS_SKU_DATA           Command = 2   // 传输SKU信息
 	RESPONSE_TRANS_SKU_DATA          Command = 102 // 传输SKU信息响应包
 	REQUEST_TRANS_ITEM_DATA          Command = 3   // 传输匹配信息
-	RESPONSE_TRANS_ITEM_DATA         Command = 103 //传输匹配信息响应
+	RESPONSE_TRANS_ITEM_DATA         Command = 103 // 传输匹配信息响应
 	REQUEST_UPLOAD_SKU_DATA          Command = 4   // 边缘端传输SKU信息
 	RESPONSE_UPLOAD_SKU_DATA         Command = 104 // 传输SKU信息响应包
 	REQUEST_PASSIVE_UPLOAD_SKU_DATA  Command = 5   // 被动上传
-	RESPONSE_PASSIVE_UPLOAD_SKU_DATA Command = 105
+	RESPONSE_PASSIVE_UPLOAD_SKU_DATA Command = 105 // 被动上传响应包
+	REQUEST_TRANS_YOYOINFO_DATA      Command = 6   // 云端下发Yoyo数据
+	RESPONSE_TRANS_YOYOINFO_DATA     Command = 106 // 云端下发Yoyo数据响应
 )
 
 /**

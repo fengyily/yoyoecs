@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-15 09:36:41
  * @LastEditors: F1
- * @LastEditTime: 2020-07-21 15:29:27
+ * @LastEditTime: 2020-07-30 15:24:49
  * @Description: 服务端的测示例
  */
 package main
@@ -47,6 +47,13 @@ func main() {
 
 			fmt.Println("收到了sku数据", header.Length, cs.ConnectId, list.GetSku())
 			cs.SendMessage(protocols.RESPONSE_UPLOAD_SKU_DATA, 0, []byte(fmt.Sprintf("收到:%v，请继续发送，如果你还有的话。", len(list.GetSku()))))
+		}
+		if header.Cmd == protocols.REQUEST_TRANS_YOYOINFO_DATA {
+			yoyoList := protoc.YoyoInfoList{}
+			proto.Unmarshal(data, &yoyoList)
+
+			fmt.Println("收到了yoyo数据", header.Length, cs.ConnectId, yoyoList.GetYoyoInfo())
+			cs.SendMessage(protocols.RESPONSE_TRANS_YOYOINFO_DATA, 0, []byte(fmt.Sprintf("收到:%v，请继续发送，如果你还有的话。", len(yoyoList.GetYoyoInfo()))))
 		}
 	}
 

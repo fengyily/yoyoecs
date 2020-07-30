@@ -10,6 +10,10 @@ message Sku {
     string PluCode =6;
     float Stock = 7;
     int32 IsOn = 8;
+    int64 YoyoCode=9;
+    string ImageUrl=10;
+    string DisplayName=11;
+    int32 IsLock=12;
 }
 
 message SkuList {
