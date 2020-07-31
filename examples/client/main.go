@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2020-07-31 16:18:06
+ * @LastEditTime: 2020-07-31 17:00:40
  * @Description: 客户端测试
  */
 package main
@@ -92,12 +92,12 @@ func main() {
 		}
 		for i := 0; i < 100; i++ {
 			yoyoInfo := protoc.YoyoInfo{}
-			yoyoInfo.Name = "Name" + strconv.Itoa(i)
+			yoyoInfo.Name = "Name测试中文啊" + strconv.Itoa(i)
 
 			yoyoList.YoyoInfo = append(yoyoList.YoyoInfo, &yoyoInfo)
 		}
 		body, _ = proto.Marshal(&yoyoList)
-		client.SendMessage(protocols.REQUEST_TRANS_YOYOINFO_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
+		client.SendMessage(protocols.REQUEST_TRANS_YOYOINFO_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB, body)
 
 	}
 	client.Conn("127.0.0.1:9091")
