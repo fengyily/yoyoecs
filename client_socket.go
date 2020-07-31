@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-28 09:29:29
+ * @LastEditTime: 2020-07-31 16:15:03
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -307,11 +307,11 @@ func (cs *ClientSocket) read() {
 						data := cs.Buffer[i+protocols.HEADER_LENGTH : i+protocols.HEADER_LENGTH+int(header.Length)]
 						cs.Buffer = cs.Buffer[i+protocols.HEADER_LENGTH+int(header.Length):]
 						if cs.OnRecvMessage != nil {
-							if protocols.Flag(header.Flag)&protocols.HEADER_FLAG_IS_COMPRESS > 0 {
+							if header.Flag&protocols.HEADER_FLAG_IS_COMPRESS > 0 {
 
-								fmt.Println("开启了压缩,解压前", len(data))
+								fmt.Println("收到消息：开启了压缩,解压前", len(data))
 								data = utils.UnCompress(data)
-								fmt.Println("开启了压缩,解压后", len(data))
+								fmt.Println("收到消息：开启了压缩,解压后", len(data))
 								header.Length = uint16(len(data))
 							}
 							cs.OnRecvMessage(header, data, cs)
@@ -357,10 +357,10 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 
 	var data []byte
 	if body != nil {
-		if protocols.HEADER_FLAG_IS_COMPRESS&protocols.Flag(flag) > 0 {
-			fmt.Println("开启了压缩,压缩前", len(body))
+		if protocols.HEADER_FLAG_IS_COMPRESS&flag > 0 {
+			fmt.Println("发送消息：开启了压缩,压缩前", len(body))
 			body = utils.Compress(body)
-			fmt.Println("开启了压缩,压缩后", len(body))
+			fmt.Println("发送消息：开启了压缩,压缩后", len(body))
 		}
 
 		header.Length = uint16(len(body))
