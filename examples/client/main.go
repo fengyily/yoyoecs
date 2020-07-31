@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2020-07-30 15:22:12
+ * @LastEditTime: 2020-07-31 16:18:06
  * @Description: 客户端测试
  */
 package main
@@ -60,7 +60,7 @@ func main() {
 
 		for i := 0; i < 200; i++ {
 			sku := &protoc.Sku{}
-			sku.Id = int32(i)
+			sku.Id = int64(i)
 			sku.SkuName = "skuname" + strconv.Itoa(i)
 			sku.Price = 100
 
