@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-17 18:07:04
  * @LastEditors: F1
- * @LastEditTime: 2020-07-31 16:52:20
+ * @LastEditTime: 2020-08-02 10:55:01
  * @Description: file content
  */
 package test
@@ -56,6 +56,8 @@ func TestPBCompress(t *testing.T) {
 	var after []byte
 	var pbb []byte
 
+	after = nil
+	println("after", len(after))
 	// regs := protoc.Registers{
 	// 	Register: make([]*protoc.Register, 0),
 	// }

@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-31 16:15:03
+ * @LastEditTime: 2020-08-02 10:56:17
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -351,18 +351,19 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 	header := protocols.Header{}
 	header.Cmd = cmd
 	header.Flag = flag
+
+	if (protocols.HEADER_FLAG_IS_COMPRESS&flag) > 0 && len(body) > 0 {
+		fmt.Println("发送消息：开启了压缩,压缩前", len(body))
+		body = utils.Compress(body)
+		fmt.Println("发送消息：开启了压缩,压缩后", len(body))
+	}
+
 	if len(body) > 2<<15 {
 		panic(fmt.Sprintf("超出可接收长度。len(body):%d > %d", len(body), 2<<15))
 	}
 
 	var data []byte
 	if body != nil {
-		if protocols.HEADER_FLAG_IS_COMPRESS&flag > 0 {
-			fmt.Println("发送消息：开启了压缩,压缩前", len(body))
-			body = utils.Compress(body)
-			fmt.Println("发送消息：开启了压缩,压缩后", len(body))
-		}
-
 		header.Length = uint16(len(body))
 		data = header.ToBytes()
 		data = append(data, body...)
