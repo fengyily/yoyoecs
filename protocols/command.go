@@ -2,7 +2,7 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2020-07-30 15:21:46
+ * @LastEditTime: 2020-08-03 10:49:01
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
@@ -50,6 +50,7 @@ const (
 	RESPONSE_PASSIVE_UPLOAD_SKU_DATA Command = 105 // 被动上传响应包
 	REQUEST_TRANS_YOYOINFO_DATA      Command = 6   // 云端下发Yoyo数据
 	RESPONSE_TRANS_YOYOINFO_DATA     Command = 106 // 云端下发Yoyo数据响应
+	TARGET_CMD_SKU_DATA_DONE         Command = 200 // 标识ＳＫＵ数据已传输完毕
 )
 
 /**
