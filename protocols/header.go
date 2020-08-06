@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-30 14:58:06
+ * @LastEditTime: 2020-08-06 21:56:32
  * @Description: 协议包中的头部相关定义
  */
 package protocols
@@ -121,7 +121,7 @@ func LoadHeader(buffer *[]byte) (ok bool, header Header) {
 			rIndex := 0
 			for ; rIndex < total-i; rIndex++ {
 				if header.Cmd.IsCommandType((*buffer)[i+rIndex]) {
-					//fmt.Println("重新定位成功。丢弃　", i+rIndex, "字节。")
+					fmt.Println("重新定位成功。丢弃　", i+rIndex, "字节。")
 					break
 				}
 			}
