@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-08-06 21:55:59
+ * @LastEditTime: 2020-08-06 22:59:17
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -45,7 +45,7 @@ type ClientSocket struct {
 	ConnectId     string
 	IsConnected   bool
 	ipAddress     string
-	conn          net.Conn
+	conn          *net.Conn
 	OnConnect     func(string, *ClientSocket)
 	OnRecvMessage func(protocols.Header, []byte, *ClientSocket)
 	OnClose       func(string)
@@ -74,7 +74,7 @@ type ClientSocket struct {
  * @Return:conn *net.Conn
 */
 func (cs *ClientSocket) GetConn() (conn *net.Conn) {
-	return &cs.conn
+	return cs.conn
 }
 
 /**
@@ -90,7 +90,7 @@ func (cs *ClientSocket) GetConn() (conn *net.Conn) {
 func (cs *ClientSocket) FormConn(conn *net.Conn) {
 	cs.IsConnected = true
 	cs.isReConnect = false
-	cs.conn = *conn
+	cs.conn = conn
 	go cs.read()
 }
 
@@ -112,7 +112,8 @@ func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 	cs.isReConnect = true
 	for {
 		cs.ipAddress = ipAddress
-		cs.conn, err = net.Dial("tcp", ipAddress)
+		cn, err := net.Dial("tcp", ipAddress)
+		cs.conn = &cn
 		if err != nil {
 			if cs.OnConnError != nil {
 				cs.OnConnError(err)
@@ -157,8 +158,8 @@ func (cs *ClientSocket) checkConn() (err error) {
 	cs.Buffer = cs.Buffer[len(cs.Buffer):]
 	for {
 		cs.conn = nil
-		cs.conn, err = net.Dial("tcp", cs.ipAddress)
-
+		cn, err := net.Dial("tcp", cs.ipAddress)
+		cs.conn = &cn
 		if err != nil {
 			if cs.OnConnError != nil {
 				cs.OnConnError(err)
@@ -213,7 +214,7 @@ func (cs *ClientSocket) HeartBeat() {
  */
 func (cs *ClientSocket) connerror(err error) {
 	if cs.conn != nil {
-		cs.conn.Close()
+		(*cs.conn).Close()
 		fmt.Println("连接断开　关闭连接")
 	}
 
@@ -250,7 +251,7 @@ func (cs *ClientSocket) read() {
 			}
 		}
 		if cs.conn != nil {
-			n, err := cs.conn.Read(data)
+			n, err := (*cs.conn).Read(data)
 			if err != nil {
 				cs.connerror(err)
 				if cs.isReConnect {
@@ -406,7 +407,7 @@ func (cs *ClientSocket) SendData(body []byte) (err error) {
 
 	// 确保body中的数据全部发送完成。
 	for index < total {
-		send, err := cs.conn.Write(body[index:])
+		send, err := (*cs.conn).Write(body[index:])
 		if err != nil {
 			fmt.Println("SendData", "发送异常，这个问题是严重的,可能会导致连接断开。", err.Error())
 			if cs.OnSendError != nil {

@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-15 09:36:41
  * @LastEditors: F1
- * @LastEditTime: 2020-07-30 15:24:49
+ * @LastEditTime: 2020-08-06 22:55:46
  * @Description: 服务端的测示例
  */
 package main
@@ -23,6 +23,7 @@ func main() {
 	server := &yoyoecs.ServerSocket{}
 	server.OnConnect = func(ip string, cs *yoyoecs.ClientSocket) {
 		fmt.Println(ip, "客户端连接成功了")
+
 	}
 	server.OnError = func(cs *yoyoecs.ClientSocket) {
 		fmt.Println("连接断开，把连接移除之，", cs.ConnectId)
@@ -39,14 +40,17 @@ func main() {
 
 			server.AddClient(cs.ConnectId, cs)
 			cs.SendMessage(protocols.RESPONSE_REGISTER_SUCCESS, 0, []byte(fmt.Sprintf("%v|%v|%v 你注册成功了。", info.ShopCode, info.IP, info.CompanyID)))
+			//cs.SendMessage(protocols.RESPONSE_UPLOAD_SKU_DATA, 0, []byte(fmt.Sprintf("收到:%v，请继续发送，如果你还有的话。", 1)))
+			cs.SendMessage(protocols.REQUEST_PASSIVE_UPLOAD_SKU_DATA, 0, []byte("快上传"))
 		}
 		if header.Cmd == protocols.REQUEST_UPLOAD_SKU_DATA {
 			// 以下是protocbuf格式传输
 			list := protoc.SkuList{}
 			proto.Unmarshal(data, &list)
 
+			//cs.SendMessage(protocols.RESPONSE_REGISTER_SUCCESS, 0, []byte("%v|%v|%v 你注册成功了。"))
 			fmt.Println("收到了sku数据", header.Length, cs.ConnectId, list.GetSku())
-			cs.SendMessage(protocols.RESPONSE_UPLOAD_SKU_DATA, 0, []byte(fmt.Sprintf("收到:%v，请继续发送，如果你还有的话。", len(list.GetSku()))))
+
 		}
 		if header.Cmd == protocols.REQUEST_TRANS_YOYOINFO_DATA {
 			yoyoList := protoc.YoyoInfoList{}
@@ -54,6 +58,10 @@ func main() {
 
 			fmt.Println("收到了yoyo数据", header.Length, cs.ConnectId, yoyoList.GetYoyoInfo())
 			cs.SendMessage(protocols.RESPONSE_TRANS_YOYOINFO_DATA, 0, []byte(fmt.Sprintf("收到:%v，请继续发送，如果你还有的话。", len(yoyoList.GetYoyoInfo()))))
+		}
+		if header.Cmd == protocols.REQUEST_PASSIVE_UPLOAD_SKU_DATA {
+			fmt.Println("收到了", string(data))
+			cs.SendMessage(protocols.RESPONSE_PASSIVE_UPLOAD_SKU_DATA, 0, []byte("continue"))
 		}
 	}
 
