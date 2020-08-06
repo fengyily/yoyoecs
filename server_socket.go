@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-31 17:05:22
+ * @LastEditTime: 2020-08-06 19:43:49
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/fengyily/yoyoecs/protocols"
+	"github.com/fengyily/yoyoecs/utils"
 )
 
 /**
@@ -89,6 +90,7 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 	go func() {
 		for {
 			if server.shutdown {
+				fmt.Println("ServerSocket::Run", "服务已挂，通知Ｆ１处理吧")
 				break
 			}
 			client, err := server.conn.Accept()
@@ -193,17 +195,31 @@ func (server *ServerSocket) AddClient(clientId string, cs *ClientSocket) {
  * @Date: 2020-07-21 11:42:47
  * @Param:header protocols.Header, data []byte
  */
-func (server *ServerSocket) SendMessage(header protocols.Header, data []byte) {
-	if data != nil {
-		header.Length = uint16(len(data))
+func (server *ServerSocket) SendMessage(header protocols.Header, body []byte) {
+	// 发送前对头部标识进行处理：压缩
+	if (protocols.HEADER_FLAG_IS_COMPRESS&header.Flag) > 0 && len(body) > 0 {
+		fmt.Println("发送消息：开启了压缩,压缩前", len(body))
+		body = utils.Compress(body)
+		fmt.Println("发送消息：开启了压缩,压缩后", len(body))
 	}
-	h := header.ToBytes()
-	if header.Length > 0 {
-		d := append(h, data...)
-		server.DataChan <- d
+	// 长度的限制逻辑，因为只有２位
+	if len(body) > 2<<15 {
+		panic(fmt.Sprintf("超出可接收长度。len(body):%d > %d", len(body), 2<<15))
+	}
+
+	var data []byte
+	if body != nil {
+		header.Length = uint16(len(body))
+		data = header.ToBytes()
+		data = append(data, body...)
+		fmt.Println("SendMessage cmd", header.Cmd, "length", header.Length, len(data))
 	} else {
-		server.DataChan <- h
+		data = header.ToBytes()
+		fmt.Println("SendMessage cmd", header.Cmd, "length nil", header.Length, len(data))
 	}
+
+	//丢到队列中云处理
+	server.DataChan <- data
 }
 
 /**
@@ -219,6 +235,7 @@ func (server *ServerSocket) send() {
 	for {
 		data := <-server.DataChan
 		if server.shutdown {
+			fmt.Println("服务已挂，通知Ｆ１处理吧")
 			break
 		}
 		go func() {

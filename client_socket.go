@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-08-02 10:56:17
+ * @LastEditTime: 2020-08-06 19:45:39
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -214,11 +214,12 @@ func (cs *ClientSocket) HeartBeat() {
 func (cs *ClientSocket) connerror(err error) {
 	if cs.conn != nil {
 		cs.conn.Close()
-		fmt.Println("连接断开")
+		fmt.Println("连接断开　关闭连接")
 	}
 
 	cs.IsConnected = false
 	if cs.OnError != nil {
+		fmt.Println("连接断开 通知OnError")
 		cs.OnError(cs)
 	}
 }
@@ -390,13 +391,14 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
  */
 func (cs *ClientSocket) SendData(body []byte) (err error) {
 	if cs.conn == nil {
+		fmt.Println("SendData", "连接异常，通知主人")
 		cs.connerror(err)
 		return
 	}
-
+	fmt.Println("SendData", "准备发送，获取待锁。")
 	cs.sendLock.Lock()
 	defer cs.sendLock.Unlock()
-
+	fmt.Println("SendData", "准备发送，获取待锁成功。")
 	total := len(body)
 	index := 0
 
@@ -404,7 +406,7 @@ func (cs *ClientSocket) SendData(body []byte) (err error) {
 	for index < total {
 		send, err := cs.conn.Write(body[index:])
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println("SendData", "发送异常，这个问题是严重的,可能会导致连接断开。", err.Error())
 			if cs.OnSendError != nil {
 				cs.OnSendError(err)
 			}
@@ -415,5 +417,7 @@ func (cs *ClientSocket) SendData(body []byte) (err error) {
 		}
 		index += send
 	}
+
+	fmt.Println("SendData", "成功发送：", total)
 	return nil
 }
