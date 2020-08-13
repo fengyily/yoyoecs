@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-08-06 22:59:17
+ * @LastEditTime: 2020-08-13 22:17:20
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -393,6 +393,11 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
  * @Return:err error
  */
 func (cs *ClientSocket) SendData(body []byte) (err error) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("SendData 出现异常了，这个是需要查下原因的。", err)
+		}
+	}()
 	if cs.conn == nil {
 		fmt.Println("SendData", "连接异常，通知主人")
 		cs.connerror(err)
@@ -407,6 +412,11 @@ func (cs *ClientSocket) SendData(body []byte) (err error) {
 
 	// 确保body中的数据全部发送完成。
 	for index < total {
+		if cs.conn == nil || !cs.IsConnected {
+			fmt.Println("SendData", "连接异常，怎么肥４？")
+			//cs.connerror(err)
+			break
+		}
 		send, err := (*cs.conn).Write(body[index:])
 		if err != nil {
 			fmt.Println("SendData", "发送异常，这个问题是严重的,可能会导致连接断开。", err.Error())
