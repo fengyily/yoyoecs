@@ -1,22 +1,31 @@
+/*
+ * @Author: F1
+ * @Date: 2020-07-21 11:47:32
+ * @LastEditors: F1
+ * @LastEditTime: 2020-07-31 16:18:06
+ * @Description: 客户端测试
+ */
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/fengyily/yoyoecs"
+	"github.com/fengyily/yoyoecs/protoc"
 	"github.com/fengyily/yoyoecs/protocols"
 	"github.com/fengyily/yoyoecs/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 var sendLock sync.Mutex
 
 func main() {
-	TestCompress()
+	//TestCompress()
 	client := yoyoecs.ClientSocket{}
 	client.OnConnError = func(err error) {
 		fmt.Println("on connect error ", err)
@@ -32,23 +41,64 @@ func main() {
 		if header.Cmd == protocols.RESPONSE_REGISTER_SUCCESS {
 			fmt.Println("收到注册成功消息")
 
-			test(cs)
+			//test(cs)
 		}
 	}
 
 	client.OnConnect = func(ip string, cs *yoyoecs.ClientSocket) {
-		type EdgeRegister struct {
-			IP        string `json:"ip"`
-			SN        string `json:"sn"`
-			CompanyID int64  `json:"company_id"`
-			ShopCode  string `json:"shop_code"`
-		}
-		info := EdgeRegister{}
+		// 采用ＰＢ上传ＳＫＵ信息的示例
+		info := protoc.Register{}
 		info.CompanyID = 123456789
 		info.ShopCode = "shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈"
-		d, _ := json.Marshal(info)
-		client.SendMessage(protocols.REQUEST_REGISTER, byte(protocols.HEADER_FLAG_IS_COMPRESS), d)
+		d, _ := proto.Marshal(&info)
+		client.SendMessage(protocols.REQUEST_REGISTER, protocols.HEADER_FLAG_IS_COMPRESS|protocols.HEADER_FLAG_DATA_TYPE_JSON, d)
 		fmt.Println("发起了注册申请")
+
+		skulist := protoc.SkuList{
+			Sku: make([]*protoc.Sku, 0),
+		}
+
+		for i := 0; i < 200; i++ {
+			sku := &protoc.Sku{}
+			sku.Id = int64(i)
+			sku.SkuName = "skuname" + strconv.Itoa(i)
+			sku.Price = 100
+
+			skulist.Sku = append(skulist.Sku, sku)
+		}
+
+		body, _ := proto.Marshal(&skulist)
+
+		//　采用了pb数据类型，并且开启压缩，如果传输数据较大，建议开启压缩
+		client.SendMessage(protocols.REQUEST_UPLOAD_SKU_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
+
+		item := protoc.ItemList{
+			Items: make([]*protoc.Item, 0),
+		}
+
+		for i := 0; i < 100; i++ {
+			it := protoc.Item{}
+			it.Id = int64(i)
+			it.Name = "测试啊"
+			it.MatchVersionCode = "v1.0.0.1"
+
+			item.Items = append(item.Items, &it)
+		}
+		body, _ = proto.Marshal(&item)
+		client.SendMessage(protocols.REQUEST_TRANS_ITEM_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
+
+		yoyoList := protoc.YoyoInfoList{
+			YoyoInfo: make([]*protoc.YoyoInfo, 0),
+		}
+		for i := 0; i < 100; i++ {
+			yoyoInfo := protoc.YoyoInfo{}
+			yoyoInfo.Name = "Name" + strconv.Itoa(i)
+
+			yoyoList.YoyoInfo = append(yoyoList.YoyoInfo, &yoyoInfo)
+		}
+		body, _ = proto.Marshal(&yoyoList)
+		client.SendMessage(protocols.REQUEST_TRANS_YOYOINFO_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
+
 	}
 	client.Conn("127.0.0.1:9091")
 
@@ -57,6 +107,20 @@ func main() {
 	sw.Wait()
 }
 
+/**
+ * @Title:
+ * @Description:
+ *
+ * 					测试各种情况包的发送：
+ * 					- 大包（超出缓存区的包），用以测试分包接收是否正常
+ *					- 分包（一个完整的包，分两次发送），用以测试并包是否正常
+ *					- 异常包（不完整的包），用以测试是否能重新定位包
+ *
+ * @Author: F1
+ * @Date: 2020-07-28 09:30:42
+ * @Param:
+ * @Return:
+ */
 func test(client *yoyoecs.ClientSocket) {
 
 	go func(client *yoyoecs.ClientSocket) {
@@ -67,7 +131,7 @@ func test(client *yoyoecs.ClientSocket) {
 			for j := 1; j <= 100; j++ {
 
 				index++
-				client.SendMessage(protocols.RESPONSE_TRANS_SKU_DATA, byte(protocols.HEADER_FLAG_IS_COMPRESS), []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈第"+strconv.Itoa(i)+" 轮测试"))
+				client.SendMessage(protocols.RESPONSE_TRANS_SKU_DATA, protocols.HEADER_FLAG_IS_COMPRESS, []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈第"+strconv.Itoa(i)+" 轮测试"))
 				if n%20 == 0 {
 					index++
 					SendSplitMessage(client.GetConn(), protocols.REQUEST_UPLOAD_SKU_DATA, []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，第"+strconv.Itoa(i)+" 批分裂消息"))
@@ -149,8 +213,18 @@ func SendBadMessage(conn *net.Conn, cmd protocols.Command, body []byte) (err err
 	return
 }
 
-func TestCompress() {
-
+/**
+ * @Title:TestCompress　测试包的压缩
+ * @Description:
+ *
+ *					测试包的压缩
+ *
+ * @Author: F1
+ * @Date: 2020-07-28 09:33:46
+ * @Param:
+ * @Return:
+ */
+func TestCompress(t *testing.T) {
 	befor := []byte("这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的")
 	after := utils.Compress(befor)
 	println("befor", len(befor))
@@ -160,4 +234,48 @@ func TestCompress() {
 	out := utils.UnCompress(after)
 
 	println("out", string(out))
+}
+
+func TestPB(t *testing.T) {
+	reg := &protoc.Register{}
+
+	reg.SN = "SN00112343"
+	reg.CompanyID = 12345674879
+	reg.ShopCode = "这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的"
+	reg.IP = "127.0.0.1"
+	pbb, _ := proto.Marshal(reg)
+	println("pb序列化之后的长度：", len(pbb))
+
+	outreg := &protoc.Register{}
+	proto.Unmarshal(pbb, outreg)
+	println(outreg.String())
+
+	fmt.Println("pb=", reg.String())
+	if outreg.SN == reg.SN && outreg.CompanyID == reg.CompanyID && outreg.ShopCode == reg.ShopCode {
+		t.Log("TestPB测试通过")
+	} else {
+		t.Error("TestPB测试失败，因为输入与输出不符。")
+	}
+}
+
+func TestPBCompress(t *testing.T) {
+	reg := &protoc.Register{}
+	reg.SN = "SN00112343"
+	reg.CompanyID = 12345674879
+	reg.ShopCode = "这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的这是测试之前的"
+	reg.IP = "127.0.0.1"
+	pbb, _ := proto.Marshal(reg)
+	println("pb序列化之后的长度：", len(pbb))
+
+	outreg := &protoc.Register{}
+	proto.Unmarshal(pbb, outreg)
+	println(outreg.String())
+
+	fmt.Println("pb=", reg.String())
+	if outreg.SN == reg.SN && outreg.CompanyID == reg.CompanyID && outreg.ShopCode == reg.ShopCode {
+		t.Log("TestPBCompress测试通过")
+	} else {
+		t.Error("TestPBCompress测试失败，因为输入与输出不符。")
+	}
+
 }

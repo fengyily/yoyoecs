@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package protoc;
+
+message Register {
+    string IP = 1;
+    string SN = 2;
+    int64 CompanyID = 3;
+    string ShopCode = 4;
+}
+
+message Registers {
+    repeated Register register = 1;
+}

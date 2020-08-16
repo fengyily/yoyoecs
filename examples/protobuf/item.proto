@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package protoc;
+
+message Item {
+    int64 Id = 1;
+    int64 YoyoCode = 2;
+    string Name = 3;
+    int64 MatchedAt =4;
+    int64 SkuCode=5;
+    int64 SkuId = 6;
+    string MatchVersionCode=7;
+    bool AutoPrint =8;
+    int64 Price=9;
+    string ImageUrl =10;
+}
+
+message ItemList {
+    repeated Item Items=1;
+}
