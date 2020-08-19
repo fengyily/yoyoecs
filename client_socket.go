@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-08-13 23:30:04
+ * @LastEditTime: 2020-08-19 18:55:51
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -167,8 +167,8 @@ func (cs *ClientSocket) checkConn() (err error) {
 			time.Sleep(5 * time.Second)
 			continue
 		} else {
-			cs.OnConnect("连接成功。", cs)
 			cs.IsConnected = true
+			cs.OnConnect("连接成功。", cs)
 			break
 		}
 	}
