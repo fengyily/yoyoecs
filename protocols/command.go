@@ -23,9 +23,9 @@ import (
  *  __________________________________________________________
  * | 1 byte  | 1 byte  | 2 byte  | length byte                |
  * | ------  | ------  | ------- | ----------------           |
- * | command | json,pb | length  |  body                      |
+ * | command | flag    | length  |  body                      |
  * | ------  | ------  | ------- | ----------------           |
- * | [0]     | [0]     | [1][2]  | [3][][][][]...[length+3]   |
+ * | [0]     | [1]     | [2][3]  | [4][5][6][7][]	 		  |
  * | 0-255   | 0-255   | 0-65535 | length                     |
  * |__________________________________________________________|
  *
@@ -50,6 +50,9 @@ const (
 	RESPONSE_PASSIVE_UPLOAD_SKU_DATA Command = 105 // 被动上传响应包
 	REQUEST_TRANS_YOYOINFO_DATA      Command = 6   // 云端下发Yoyo数据
 	RESPONSE_TRANS_YOYOINFO_DATA     Command = 106 // 云端下发Yoyo数据响应
+	REQUEST_EXEC_CMD                 Command = 110
+	RESPONAE_EXEC_CMD_REPLY          Command = 210 //
+
 )
 
 /**

@@ -10,3 +10,4 @@ protoc --proto_path=. --go_out=../../protoc register.proto
 protoc --proto_path=. --go_out=../../protoc sku.proto 
 protoc --proto_path=. --go_out=../../protoc item.proto 
 protoc --proto_path=. --go_out=../../protoc yoyoinfo.proto 
+protoc --proto_path=. --go_out=../../protoc cmd.proto 
