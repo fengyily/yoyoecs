@@ -2,6 +2,10 @@ syntax = "proto3";
 
 package protoc;
 
-message Item {
+message ShellCmd {
     string Command = 1;
+}
+
+message ShellExecReply {
+    string Result = 1;
 }
