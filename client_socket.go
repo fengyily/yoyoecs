@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-08-19 18:55:51
+ * @LastEditTime: 2020-09-21 20:37:36
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -288,7 +288,7 @@ func (cs *ClientSocket) read() {
 					}
 					continue
 				} else if header.Cmd == protocols.RESPONSE_HEARTBEAT {
-					fmt.Println("收到心跳回复。")
+					//fmt.Println("收到心跳回复。")
 					continue
 				} else {
 					total := len(cs.Buffer)
@@ -403,10 +403,10 @@ func (cs *ClientSocket) SendData(body []byte) (err error) {
 		cs.connerror(err)
 		return
 	}
-	fmt.Println("SendData", "准备发送，获取待锁。")
+	//fmt.Println("SendData", "准备发送，获取待锁。")
 	cs.sendLock.Lock()
 	defer cs.sendLock.Unlock()
-	fmt.Println("SendData", "准备发送，获取待锁成功。")
+	//fmt.Println("SendData", "准备发送，获取待锁成功。")
 	total := len(body)
 	index := 0
 
