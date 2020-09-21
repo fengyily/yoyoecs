@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-09-21 20:37:36
+ * @LastEditTime: 2020-09-21 22:27:27
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -363,7 +363,9 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 	}
 
 	if len(body) > 2<<15 {
-		panic(fmt.Sprintf("超出可接收长度。len(body):%d > %d", len(body), 2<<15))
+		//panic(fmt.Sprintf("超出可接收长度。len(body):%d > %d", len(body), 2<<15))
+		fmt.Println(fmt.Sprintf("超出可接收长度。len(body):%d > %d", len(body), 2<<15))
+		return
 	}
 
 	var data []byte
@@ -371,10 +373,10 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 		header.Length = uint16(len(body))
 		data = header.ToBytes()
 		data = append(data, body...)
-		fmt.Println("SendMessage cmd", cmd, "length", header.Length, len(data))
+		//fmt.Println("SendMessage cmd", cmd, "length", header.Length, len(data))
 	} else {
 		data = header.ToBytes()
-		fmt.Println("SendMessage cmd", cmd, "length nil", header.Length, len(data))
+		//fmt.Println("SendMessage cmd", cmd, "length nil", header.Length, len(data))
 	}
 
 	err = cs.SendData(data)

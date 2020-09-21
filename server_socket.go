@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-08-11 21:25:53
+ * @LastEditTime: 2020-09-21 22:33:59
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -180,6 +180,7 @@ func (server *ServerSocket) AddClient(clientId string, cs *ClientSocket) {
 	server.cloneLock.Lock()
 	defer server.cloneLock.Unlock()
 	if server.Clients != nil {
+		cs.ConnectId = clientId
 		server.Clients[clientId] = cs
 	}
 }
