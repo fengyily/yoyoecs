@@ -1,0 +1,12 @@
+syntax="proto3";
+
+package protoc;
+
+message OutputRule {
+    int64 YoyoCode =1;
+    float AutoPrintRate =2;
+}
+
+message OutputRuleList {
+    repeated OutputRule OutputRule = 1;
+}

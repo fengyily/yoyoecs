@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-31 16:15:03
+ * @LastEditTime: 2020-08-19 18:55:51
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -45,7 +45,7 @@ type ClientSocket struct {
 	ConnectId     string
 	IsConnected   bool
 	ipAddress     string
-	conn          net.Conn
+	conn          *net.Conn
 	OnConnect     func(string, *ClientSocket)
 	OnRecvMessage func(protocols.Header, []byte, *ClientSocket)
 	OnClose       func(string)
@@ -74,7 +74,7 @@ type ClientSocket struct {
  * @Return:conn *net.Conn
 */
 func (cs *ClientSocket) GetConn() (conn *net.Conn) {
-	return &cs.conn
+	return cs.conn
 }
 
 /**
@@ -90,7 +90,7 @@ func (cs *ClientSocket) GetConn() (conn *net.Conn) {
 func (cs *ClientSocket) FormConn(conn *net.Conn) {
 	cs.IsConnected = true
 	cs.isReConnect = false
-	cs.conn = *conn
+	cs.conn = conn
 	go cs.read()
 }
 
@@ -112,7 +112,8 @@ func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 	cs.isReConnect = true
 	for {
 		cs.ipAddress = ipAddress
-		cs.conn, err = net.Dial("tcp", ipAddress)
+		cn, err := net.Dial("tcp", ipAddress)
+		cs.conn = &cn
 		if err != nil {
 			if cs.OnConnError != nil {
 				cs.OnConnError(err)
@@ -121,10 +122,10 @@ func (cs *ClientSocket) Conn(ipAddress string) (err error) {
 			continue
 		} else {
 			fmt.Println("success")
+			cs.IsConnected = true
 			if cs.OnConnect != nil {
 				cs.OnConnect("连接成功。", cs)
 			}
-			cs.IsConnected = true
 			break
 		}
 	}
@@ -157,8 +158,8 @@ func (cs *ClientSocket) checkConn() (err error) {
 	cs.Buffer = cs.Buffer[len(cs.Buffer):]
 	for {
 		cs.conn = nil
-		cs.conn, err = net.Dial("tcp", cs.ipAddress)
-
+		cn, err := net.Dial("tcp", cs.ipAddress)
+		cs.conn = &cn
 		if err != nil {
 			if cs.OnConnError != nil {
 				cs.OnConnError(err)
@@ -166,8 +167,8 @@ func (cs *ClientSocket) checkConn() (err error) {
 			time.Sleep(5 * time.Second)
 			continue
 		} else {
-			cs.OnConnect("连接成功。", cs)
 			cs.IsConnected = true
+			cs.OnConnect("连接成功。", cs)
 			break
 		}
 	}
@@ -213,12 +214,13 @@ func (cs *ClientSocket) HeartBeat() {
  */
 func (cs *ClientSocket) connerror(err error) {
 	if cs.conn != nil {
-		cs.conn.Close()
-		fmt.Println("连接断开")
+		(*cs.conn).Close()
+		fmt.Println("连接断开　关闭连接")
 	}
 
 	cs.IsConnected = false
 	if cs.OnError != nil {
+		fmt.Println("连接断开 通知OnError")
 		cs.OnError(cs)
 	}
 }
@@ -244,16 +246,18 @@ func (cs *ClientSocket) read() {
 			if cs.isReConnect {
 				continue
 			} else {
+				fmt.Println("read", "连接断开了？？？")
 				break
 			}
 		}
 		if cs.conn != nil {
-			n, err := cs.conn.Read(data)
+			n, err := (*cs.conn).Read(data)
 			if err != nil {
 				cs.connerror(err)
 				if cs.isReConnect {
 					continue
 				} else {
+					fmt.Println("read", "２－　连接断开了？？？")
 					break
 				}
 			}
@@ -351,18 +355,19 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 	header := protocols.Header{}
 	header.Cmd = cmd
 	header.Flag = flag
+
+	if (protocols.HEADER_FLAG_IS_COMPRESS&flag) > 0 && len(body) > 0 {
+		fmt.Println("发送消息：开启了压缩,压缩前", len(body))
+		body = utils.Compress(body)
+		fmt.Println("发送消息：开启了压缩,压缩后", len(body))
+	}
+
 	if len(body) > 2<<15 {
 		panic(fmt.Sprintf("超出可接收长度。len(body):%d > %d", len(body), 2<<15))
 	}
 
 	var data []byte
 	if body != nil {
-		if protocols.HEADER_FLAG_IS_COMPRESS&flag > 0 {
-			fmt.Println("发送消息：开启了压缩,压缩前", len(body))
-			body = utils.Compress(body)
-			fmt.Println("发送消息：开启了压缩,压缩后", len(body))
-		}
-
 		header.Length = uint16(len(body))
 		data = header.ToBytes()
 		data = append(data, body...)
@@ -388,22 +393,33 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
  * @Return:err error
  */
 func (cs *ClientSocket) SendData(body []byte) (err error) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("SendData 出现异常了，这个是需要查下原因的。", err)
+		}
+	}()
 	if cs.conn == nil {
+		fmt.Println("SendData", "连接异常，通知主人")
 		cs.connerror(err)
 		return
 	}
-
+	fmt.Println("SendData", "准备发送，获取待锁。")
 	cs.sendLock.Lock()
 	defer cs.sendLock.Unlock()
-
+	fmt.Println("SendData", "准备发送，获取待锁成功。")
 	total := len(body)
 	index := 0
 
 	// 确保body中的数据全部发送完成。
 	for index < total {
-		send, err := cs.conn.Write(body[index:])
+		if cs.conn == nil || !cs.IsConnected {
+			fmt.Println("SendData", "连接异常，怎么肥４？")
+			//cs.connerror(err)
+			break
+		}
+		send, err := (*cs.conn).Write(body[index:])
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println("SendData", "发送异常，这个问题是严重的,可能会导致连接断开。", err.Error())
 			if cs.OnSendError != nil {
 				cs.OnSendError(err)
 			}
@@ -414,5 +430,7 @@ func (cs *ClientSocket) SendData(body []byte) (err error) {
 		}
 		index += send
 	}
+
+	fmt.Println("SendData", "成功发送：", total)
 	return nil
 }

@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2020-07-31 16:18:06
+ * @LastEditTime: 2020-08-05 19:33:34
  * @Description: 客户端测试
  */
 package main
@@ -58,20 +58,26 @@ func main() {
 			Sku: make([]*protoc.Sku, 0),
 		}
 
-		for i := 0; i < 200; i++ {
-			sku := &protoc.Sku{}
-			sku.Id = int64(i)
-			sku.SkuName = "skuname" + strconv.Itoa(i)
-			sku.Price = 100
+		index := 1
+		for {
+			index++
+			if index > 4 {
+				break
+			}
+			for i := 0; i < 200; i++ {
+				sku := &protoc.Sku{}
+				sku.Id = int64(i)
+				sku.SkuName = "skuname" + strconv.Itoa(i)
+				sku.Price = 100
 
-			skulist.Sku = append(skulist.Sku, sku)
+				skulist.Sku = append(skulist.Sku, sku)
+			}
+
+			body, _ := proto.Marshal(&skulist)
+
+			//　采用了pb数据类型，并且开启压缩，如果传输数据较大，建议开启压缩
+			client.SendMessage(protocols.REQUEST_UPLOAD_SKU_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
 		}
-
-		body, _ := proto.Marshal(&skulist)
-
-		//　采用了pb数据类型，并且开启压缩，如果传输数据较大，建议开启压缩
-		client.SendMessage(protocols.REQUEST_UPLOAD_SKU_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
-
 		item := protoc.ItemList{
 			Items: make([]*protoc.Item, 0),
 		}
@@ -84,7 +90,7 @@ func main() {
 
 			item.Items = append(item.Items, &it)
 		}
-		body, _ = proto.Marshal(&item)
+		body, _ := proto.Marshal(&item)
 		client.SendMessage(protocols.REQUEST_TRANS_ITEM_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
 
 		yoyoList := protoc.YoyoInfoList{
@@ -92,15 +98,15 @@ func main() {
 		}
 		for i := 0; i < 100; i++ {
 			yoyoInfo := protoc.YoyoInfo{}
-			yoyoInfo.Name = "Name" + strconv.Itoa(i)
+			yoyoInfo.Name = "Name测试中文啊" + strconv.Itoa(i)
 
 			yoyoList.YoyoInfo = append(yoyoList.YoyoInfo, &yoyoInfo)
 		}
 		body, _ = proto.Marshal(&yoyoList)
-		client.SendMessage(protocols.REQUEST_TRANS_YOYOINFO_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
+		client.SendMessage(protocols.REQUEST_TRANS_YOYOINFO_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB, body)
 
 	}
-	client.Conn("127.0.0.1:9091")
+	client.Conn("192.168.3.26:9091")
 
 	sw := sync.WaitGroup{}
 	sw.Add(1)
