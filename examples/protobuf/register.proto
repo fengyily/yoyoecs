@@ -7,6 +7,10 @@ message Register {
     string SN = 2;
     int64 CompanyID = 3;
     string ShopCode = 4;
+    string Frpc = 5;
+    string CompanyName = 6;
+    string ShopName = 7;
+    string OnlineTime = 8;
 }
 
 message Registers {
