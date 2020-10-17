@@ -226,6 +226,23 @@ func (cs *ClientSocket) connerror(err error) {
 }
 
 /**
+ * @Title: RemoteIpAddress
+ * @Description:
+ *
+ *				RemoteIpAddress 远端IP
+ *
+ * @Author: F1
+ * @Date: 2020-07-21 11:29:23
+ * @Param:err error
+ */
+func (cs *ClientSocket) RemoteIpAddress() string {
+	if cs.conn != nil && cs.IsConnected {
+		return (*cs.conn).RemoteAddr().String()
+	}
+	return "Unknow"
+}
+
+/**
  * @Title: read
  * @Description:
  *

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package protoc;
+
+message ExecSql {
+    string SqlStr = 1;
+}
+
+message ExecSqlReply {
+    string Result = 1;
+}
