@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-10-22 21:41:41
+ * @LastEditTime: 2020-10-22 22:13:25
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -43,6 +43,7 @@ import (
 type ClientSocket struct {
 	isReConnect   bool
 	ConnectId     string
+	RemoteAddr    string
 	IsConnected   bool
 	ipAddress     string
 	conn          *net.Conn
@@ -92,19 +93,6 @@ func (cs *ClientSocket) FormConn(conn *net.Conn) {
 	cs.isReConnect = false
 	cs.conn = conn
 	go cs.read()
-}
-
-/**
- * @Title:RemoteAddr
- * @Description:
- *
- *				获取远端的ＩＰ地址
- *
- * @Author: F1
- * @Date: 2020-10-22 21:41:09
- */
-func (cs *ClientSocket) RemoteAddr() string {
-	return (*(cs.conn)).RemoteAddr().String()
 }
 
 /**
