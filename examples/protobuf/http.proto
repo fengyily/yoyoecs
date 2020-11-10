@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package protoc;
+
+message HttpRequest {
+    string Url = 1;
+    string Method = 2;
+    string Params = 3;
+}
+
+message HttpRequestReply {
+    string Result = 1;
+}
