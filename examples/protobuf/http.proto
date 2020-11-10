@@ -4,10 +4,13 @@ package protoc;
 
 message HttpRequest {
     string Url = 1;
-    string Method = 2;
-    string Params = 3;
+    string Headers = 2;
+    string Method = 3;
+    string Params = 4;
 }
 
 message HttpRequestReply {
-    string Result = 1;
+    int32 Code = 1;
+    string Message = 2;
+    string Result = 3;
 }
