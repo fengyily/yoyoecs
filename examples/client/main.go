@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2020-08-05 19:33:34
+ * @LastEditTime: 2020-11-11 11:30:34
  * @Description: 客户端测试
  */
 package main
@@ -64,7 +64,7 @@ func main() {
 			if index > 4 {
 				break
 			}
-			for i := 0; i < 200; i++ {
+			for i := 0; i < 20000; i++ {
 				sku := &protoc.Sku{}
 				sku.Id = int64(i)
 				sku.SkuName = "skuname" + strconv.Itoa(i)
@@ -106,7 +106,7 @@ func main() {
 		client.SendMessage(protocols.REQUEST_TRANS_YOYOINFO_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB, body)
 
 	}
-	client.Conn("192.168.3.26:9091")
+	client.Conn("192.168.3.24:9091")
 
 	sw := sync.WaitGroup{}
 	sw.Add(1)
