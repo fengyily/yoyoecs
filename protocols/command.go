@@ -2,7 +2,7 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2020-09-21 19:33:11
+ * @LastEditTime: 2020-11-10 20:01:20
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
@@ -52,6 +52,8 @@ const (
 	RESPONSE_TRANS_YOYOINFO_DATA     Command = 106 // 云端下发Yoyo数据响应
 	REQUEST_EXEC_CMD                 Command = 110
 	RESPONAE_EXEC_CMD_REPLY          Command = 210 //
+	HTTP_REQUEST_CMD                 Command = 111 // 发起ＨＴＴＰ请求
+	HTTP_REQUEST_REPLY               Command = 211 //　HTTP请求返回
 	TARGET_CMD_SKU_DATA_DONE         Command = 200 // 标识ＳＫＵ数据已传输完毕
 )
 
