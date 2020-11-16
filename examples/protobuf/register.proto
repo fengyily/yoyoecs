@@ -11,6 +11,8 @@ message Register {
     string CompanyName = 6;
     string ShopName = 7;
     string OnlineTime = 8;
+    string EdgeVersion = 9;
+    string MainVersion = 10;
 }
 
 message Registers {
