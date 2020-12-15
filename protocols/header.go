@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-08-06 21:56:32
+ * @LastEditTime: 2020-12-15 20:28:15
  * @Description: 协议包中的头部相关定义
  */
 package protocols
@@ -63,9 +63,9 @@ const (
  *		[]byte 长度为：protocols.HEADER_LENGTH
  */
 type Header struct {
-	Cmd    Command
-	Flag   Flag
-	Length uint16
+	Cmd    Command `json:"cmd"`
+	Flag   Flag    `json:"flag"`
+	Length uint16  `json:"length"`
 }
 
 /**
