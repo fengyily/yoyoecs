@@ -13,6 +13,9 @@ message Item {
     bool AutoPrint =8;
     int64 Price=9;
     string ImageUrl =10;
+    int64 MatchLevel = 11;
+    int64 MatchType = 12;
+    int64 Sales = 13;
 }
 
 message ItemList {
