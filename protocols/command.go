@@ -2,7 +2,7 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2020-11-10 20:01:20
+ * @LastEditTime: 2021-01-05 19:26:02
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
@@ -55,6 +55,7 @@ const (
 	HTTP_REQUEST_CMD                 Command = 111 // 发起ＨＴＴＰ请求
 	HTTP_REQUEST_REPLY               Command = 211 //　HTTP请求返回
 	TARGET_CMD_SKU_DATA_DONE         Command = 200 // 标识ＳＫＵ数据已传输完毕
+	TARGET_CMD_ITEM_DATA_DONE        Command = 201 // 标识ＩＴＥＭ数据已传输完毕
 )
 
 /**
