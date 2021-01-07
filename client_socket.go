@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-11-11 14:26:44
+ * @LastEditTime: 2021-01-07 11:12:26
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -379,6 +379,8 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 		fmt.Println("发送消息：开启了压缩,压缩前", len(body))
 		cdata = utils.Compress(body)
 		fmt.Println("发送消息：开启了压缩,压缩后", len(cdata))
+	} else {
+		cdata = body
 	}
 
 	if len(cdata) > 2<<15 {
