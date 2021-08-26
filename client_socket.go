@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-11-11 14:26:44
+ * @LastEditTime: 2021-08-26 23:18:04
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -23,6 +23,7 @@ package yoyoecs
 import (
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -450,6 +451,9 @@ func (cs *ClientSocket) SendData(body []byte) (err error) {
 			}
 			if cs.OnError != nil {
 				cs.OnError(cs)
+			}
+			if strings.Contains(err.Error(), "write: broken pipe") {
+				cs.connerror(err)
 			}
 			break
 		}
