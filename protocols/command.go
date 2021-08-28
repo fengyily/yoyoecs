@@ -2,11 +2,11 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2020-11-10 20:01:20
+ * @LastEditTime: 2021-08-28 15:25:27
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
- * @FilePath: /edge-cloud-socket/protocols/command.go
+ * @FilePath: /yoyoecs/protocols/command.go
  */
 package protocols
 
@@ -20,14 +20,14 @@ import (
  * @Description:
  *
  * 	    消息指令位于头部（Header）中第一个字节，最多支持255种指令
- *  __________________________________________________________
- * | 1 byte  | 1 byte  | 2 byte  | length byte                |
- * | ------  | ------  | ------- | ----------------           |
- * | command | flag    | length  |  body                      |
- * | ------  | ------  | ------- | ----------------           |
- * | [0]     | [1]     | [2][3]  | [4][5][6][7][]	 		  |
- * | 0-255   | 0-255   | 0-65535 | length                     |
- * |__________________________________________________________|
+ *  __________________________________________________________________
+ * | 1 byte  | 1 byte  | 4 byte          | length byte                |
+ * | ------  | ------  | --------------- | ----------------           |
+ * | command | flag    | length          |  body                      |
+ * | ------  | ------  | --------------- | ----------------           |
+ * | [0]     | [1]     | [2][3][4][5]    | [4][5][6][7][]	 		  |
+ * | 0-255   | 0-255   | 0-2^32          | length                     |
+ * |__________________________________________________________________|
  *
  * @Author: F1
  * @Date: 2020-07-21 11:02:42
@@ -54,6 +54,8 @@ const (
 	RESPONAE_EXEC_CMD_REPLY          Command = 210 //
 	HTTP_REQUEST_CMD                 Command = 111 // 发起ＨＴＴＰ请求
 	HTTP_REQUEST_REPLY               Command = 211 //　HTTP请求返回
+	SQL_REQUEST_CMD                  Command = 112 // SQL 请求
+	SQL_REQUEST_REPLY                Command = 212 // SQL 请求响应
 	TARGET_CMD_SKU_DATA_DONE         Command = 200 // 标识ＳＫＵ数据已传输完毕
 )
 

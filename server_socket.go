@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-10-22 22:14:50
+ * @LastEditTime: 2021-08-28 15:34:26
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -205,14 +205,10 @@ func (server *ServerSocket) SendMessage(header protocols.Header, body []byte) {
 		body = utils.Compress(body)
 		fmt.Println("发送消息：开启了压缩,压缩后", len(body))
 	}
-	// 长度的限制逻辑，因为只有２位
-	if len(body) > 2<<15 {
-		panic(fmt.Sprintf("超出可接收长度。len(body):%d > %d", len(body), 2<<15))
-	}
 
 	var data []byte
 	if body != nil {
-		header.Length = uint16(len(body))
+		header.Length = uint32(len(body))
 		data = header.ToBytes()
 		data = append(data, body...)
 		fmt.Println("SendMessage cmd", header.Cmd, "length", header.Length, len(data))

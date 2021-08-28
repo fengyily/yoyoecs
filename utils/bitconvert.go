@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-07-21 12:34:02
+ * @LastEditTime: 2021-08-28 15:28:34
  * @Description:
  *
  *				协议中通用的一些函数，通常为字节流转常用类型以及常用类型转字节流
@@ -32,6 +32,12 @@ func Uint16ToBytes(data uint16) []byte {
 	return bytebuf.Bytes()
 }
 
+func UintToBytes(data uint32) []byte {
+	bytebuf := bytes.NewBuffer([]byte{})
+	binary.Write(bytebuf, binary.BigEndian, data)
+	return bytebuf.Bytes()
+}
+
 /**
  * @Title:BytesToUInt16
  * @Description:
@@ -48,4 +54,11 @@ func BytesToUInt16(bys []byte) uint16 {
 	var data uint16
 	binary.Read(bytebuff, binary.BigEndian, &data)
 	return uint16(data)
+}
+
+func BytesToUInt(bys []byte) uint32 {
+	bytebuff := bytes.NewBuffer(bys)
+	var data uint32
+	binary.Read(bytebuff, binary.BigEndian, &data)
+	return uint32(data)
 }

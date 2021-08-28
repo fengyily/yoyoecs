@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2021-08-26 23:18:04
+ * @LastEditTime: 2021-08-28 15:34:14
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -335,7 +335,7 @@ func (cs *ClientSocket) read() {
 								//fmt.Println("收到消息：开启了压缩,解压前", len(data))
 								data = utils.UnCompress(data)
 								//fmt.Println("收到消息：开启了压缩,解压后", len(data))
-								header.Length = uint16(len(data))
+								header.Length = uint32(len(data))
 							}
 							cs.OnRecvMessage(header, data, cs)
 
@@ -382,19 +382,9 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 		fmt.Println("发送消息：开启了压缩,压缩后", len(cdata))
 	}
 
-	if len(cdata) > 2<<15 {
-		//panic(fmt.Sprintf("超出可接收长度。len(body):%d > %d", len(body), 2<<15))
-		fmt.Println(fmt.Sprintf("压缩之后还是超出了可接收长度。len(body):%d > %d，压缩后：%d", len(body), 2<<15, len(cdata)))
-
-		header.Flag = ^protocols.HEADER_FLAG_IS_COMPRESS
-		cdata = body[0 : 2<<15]
-
-		fmt.Println(fmt.Sprintf("按最长的截掉。len(body):%d => %d", len(body), len(cdata)))
-	}
-
 	var data []byte
 	if cdata != nil {
-		header.Length = uint16(len(cdata))
+		header.Length = uint32(len(cdata))
 		data = header.ToBytes()
 		data = append(data, cdata...)
 		//fmt.Println("SendMessage cmd", cmd, "length", header.Length, len(data))

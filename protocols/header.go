@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2020-08-06 21:56:32
+ * @LastEditTime: 2021-08-28 15:33:47
  * @Description: 协议包中的头部相关定义
  */
 package protocols
@@ -37,7 +37,8 @@ import (
 type Flag byte
 
 const (
-	HEADER_LENGTH                     = 4      // 头部的长度
+	HEADER_LENGTH                     = 6      // 头部的长度
+	BODY_LENGTH                       = 4      // 包长所占长度
 	HEADER_FLAG_DATA_TYPE_JSON   Flag = 1      // 0000 0001
 	HEADER_FLAG_DATA_TYPE_PB     Flag = 2      // 0000 0010
 	HEADER_FLAG_DATA_TYPE_STRING Flag = 3      // 0000 0011
@@ -65,7 +66,7 @@ const (
 type Header struct {
 	Cmd    Command
 	Flag   Flag
-	Length uint16
+	Length uint32
 }
 
 /**
@@ -86,8 +87,8 @@ func (header *Header) ToBytes() []byte {
 		data[0] = byte(header.Cmd)
 		data[1] = byte(header.Flag)
 
-		//data = append(data, utils.Uint16ToBytes(header.Length)...)
-		copy(&data, 2, utils.Uint16ToBytes(header.Length), 0, 2)
+		//copy(&data, 2, utils.Uint16ToBytes(header.Length), 0, 2)
+		copy(&data, 2, utils.UintToBytes(header.Length), 0, BODY_LENGTH)
 		fmt.Println("cmd", header.Cmd, "length", header.Length)
 	}
 	return data
@@ -136,7 +137,8 @@ func LoadHeader(buffer *[]byte) (ok bool, header Header) {
 			return false, header
 		}
 		header.Flag = Flag((*buffer)[1])
-		header.Length = utils.BytesToUInt16((*buffer)[2:4])
+		// body length = HEADER_LENGTH - BODY_LENGTH 到 HEADER_LENGTH
+		header.Length = utils.BytesToUInt((*buffer)[HEADER_LENGTH-BODY_LENGTH : HEADER_LENGTH])
 
 		break
 	}
