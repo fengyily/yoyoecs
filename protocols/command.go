@@ -2,7 +2,7 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2021-08-28 15:25:27
+ * @LastEditTime: 2021-08-29 11:06:27
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
@@ -35,28 +35,17 @@ import (
 type Command byte
 
 const (
-	REQUEST_HEARTBEAT                Command = 0   // 心跳包
-	RESPONSE_HEARTBEAT               Command = 100 // 心跳包响应
-	REQUEST_REGISTER                 Command = 1   // 边缘端向服务端注册
-	RESPONSE_REGISTER_SUCCESS        Command = 101 // 注册响应 成功
-	RESPONSE_REGISTER_FAILED         Command = 201 // 注册响应 成功
-	REQUEST_TRANS_SKU_DATA           Command = 2   // 传输SKU信息
-	RESPONSE_TRANS_SKU_DATA          Command = 102 // 传输SKU信息响应包
-	REQUEST_TRANS_ITEM_DATA          Command = 3   // 传输匹配信息
-	RESPONSE_TRANS_ITEM_DATA         Command = 103 // 传输匹配信息响应
-	REQUEST_UPLOAD_SKU_DATA          Command = 4   // 边缘端传输SKU信息
-	RESPONSE_UPLOAD_SKU_DATA         Command = 104 // 传输SKU信息响应包
-	REQUEST_PASSIVE_UPLOAD_SKU_DATA  Command = 5   // 被动上传
-	RESPONSE_PASSIVE_UPLOAD_SKU_DATA Command = 105 // 被动上传响应包
-	REQUEST_TRANS_YOYOINFO_DATA      Command = 6   // 云端下发Yoyo数据
-	RESPONSE_TRANS_YOYOINFO_DATA     Command = 106 // 云端下发Yoyo数据响应
-	REQUEST_EXEC_CMD                 Command = 110
-	RESPONAE_EXEC_CMD_REPLY          Command = 210 //
-	HTTP_REQUEST_CMD                 Command = 111 // 发起ＨＴＴＰ请求
-	HTTP_REQUEST_REPLY               Command = 211 //　HTTP请求返回
-	SQL_REQUEST_CMD                  Command = 112 // SQL 请求
-	SQL_REQUEST_REPLY                Command = 212 // SQL 请求响应
-	TARGET_CMD_SKU_DATA_DONE         Command = 200 // 标识ＳＫＵ数据已传输完毕
+	REQUEST_HEARTBEAT         Command = 0   // 心跳包
+	RESPONSE_HEARTBEAT        Command = 100 // 心跳包响应
+	REQUEST_REGISTER          Command = 1   // 边缘端向服务端注册
+	RESPONSE_REGISTER_SUCCESS Command = 101 // 注册响应 成功
+	RESPONSE_REGISTER_FAILED  Command = 201 // 注册响应 成功
+	REQUEST_EXEC_CMD          Command = 110
+	RESPONAE_EXEC_CMD_REPLY   Command = 210 //
+	HTTP_REQUEST_CMD          Command = 111 // 发起ＨＴＴＰ请求
+	HTTP_REQUEST_REPLY        Command = 211 //　HTTP请求返回
+	SQL_REQUEST_CMD           Command = 112 // SQL 请求
+	SQL_REQUEST_REPLY         Command = 212 // SQL 请求响应
 )
 
 /**

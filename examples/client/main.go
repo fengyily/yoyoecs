@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2020-11-11 11:30:34
+ * @LastEditTime: 2021-08-29 10:39:17
  * @Description: 客户端测试
  */
 package main
@@ -10,7 +10,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -35,9 +34,6 @@ func main() {
 		fmt.Println("成功收到消息：", header.Cmd, "长度：", header.Length, "Flag", fmt.Sprintf("%08b", header.Flag), string(data))
 		fmt.Println("-----------------------------------------------------------", time.Now())
 
-		if header.Cmd == protocols.RESPONSE_UPLOAD_SKU_DATA {
-			fmt.Println("通知继续发送。")
-		}
 		if header.Cmd == protocols.RESPONSE_REGISTER_SUCCESS {
 			fmt.Println("收到注册成功消息")
 
@@ -53,58 +49,6 @@ func main() {
 		d, _ := proto.Marshal(&info)
 		client.SendMessage(protocols.REQUEST_REGISTER, protocols.HEADER_FLAG_IS_COMPRESS|protocols.HEADER_FLAG_DATA_TYPE_JSON, d)
 		fmt.Println("发起了注册申请")
-
-		skulist := protoc.SkuList{
-			Sku: make([]*protoc.Sku, 0),
-		}
-
-		index := 1
-		for {
-			index++
-			if index > 4 {
-				break
-			}
-			for i := 0; i < 20000; i++ {
-				sku := &protoc.Sku{}
-				sku.Id = int64(i)
-				sku.SkuName = "skuname" + strconv.Itoa(i)
-				sku.Price = 100
-
-				skulist.Sku = append(skulist.Sku, sku)
-			}
-
-			body, _ := proto.Marshal(&skulist)
-
-			//　采用了pb数据类型，并且开启压缩，如果传输数据较大，建议开启压缩
-			client.SendMessage(protocols.REQUEST_UPLOAD_SKU_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
-		}
-		item := protoc.ItemList{
-			Items: make([]*protoc.Item, 0),
-		}
-
-		for i := 0; i < 100; i++ {
-			it := protoc.Item{}
-			it.Id = int64(i)
-			it.Name = "测试啊"
-			it.MatchVersionCode = "v1.0.0.1"
-
-			item.Items = append(item.Items, &it)
-		}
-		body, _ := proto.Marshal(&item)
-		client.SendMessage(protocols.REQUEST_TRANS_ITEM_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB|protocols.HEADER_FLAG_IS_COMPRESS, body)
-
-		yoyoList := protoc.YoyoInfoList{
-			YoyoInfo: make([]*protoc.YoyoInfo, 0),
-		}
-		for i := 0; i < 100; i++ {
-			yoyoInfo := protoc.YoyoInfo{}
-			yoyoInfo.Name = "Name测试中文啊" + strconv.Itoa(i)
-
-			yoyoList.YoyoInfo = append(yoyoList.YoyoInfo, &yoyoInfo)
-		}
-		body, _ = proto.Marshal(&yoyoList)
-		client.SendMessage(protocols.REQUEST_TRANS_YOYOINFO_DATA, protocols.HEADER_FLAG_DATA_TYPE_PB, body)
-
 	}
 	client.Conn("192.168.3.24:9091")
 
@@ -128,30 +72,6 @@ func main() {
  * @Return:
  */
 func test(client *yoyoecs.ClientSocket) {
-
-	go func(client *yoyoecs.ClientSocket) {
-
-		index := 1
-		n := 0
-		for i := 1; i <= 100; i++ {
-			for j := 1; j <= 100; j++ {
-
-				index++
-				client.SendMessage(protocols.RESPONSE_TRANS_SKU_DATA, protocols.HEADER_FLAG_IS_COMPRESS, []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈第"+strconv.Itoa(i)+" 轮测试"))
-				if n%20 == 0 {
-					index++
-					SendSplitMessage(client.GetConn(), protocols.REQUEST_UPLOAD_SKU_DATA, []byte("「"+strconv.Itoa(index)+"」这是ＳＫＵ信息，第"+strconv.Itoa(i)+" 批分裂消息"))
-				}
-				if n%100 == 0 {
-					index++
-					SendBadMessage(client.GetConn(), protocols.REQUEST_UPLOAD_SKU_DATA, []byte("「"+strconv.Itoa(index)+"」这是一条坏消息，它将影响下一条消息。就看你的程序会不会识别，不要影响下下条消息。。。。"))
-				}
-				n++
-			}
-			time.Sleep(2 * time.Second)
-		}
-	}(client)
-
 }
 
 //正常包发送测试

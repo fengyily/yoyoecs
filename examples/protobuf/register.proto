@@ -1,6 +1,10 @@
 syntax = "proto3";
 
-package protoc;
+// protoc: v.17.3
+option go_package = "../../protoc;protoc";
+
+// protoc: v3.6.1 
+// package protoc;
 
 message Register {
     string IP = 1;

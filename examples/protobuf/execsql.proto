@@ -1,11 +1,24 @@
 syntax = "proto3";
 
-package protoc;
+// protoc: v.17.3
+option go_package = "../../protoc;protoc";
+
+// protoc: v3.6.1 
+// package protoc;
+enum ExecType {
+    SELECT = 0;
+    INSERT = 1;
+    EXEC = 2;
+    COUNT = 3;
+    ONE = 4;
+  }
 
 message ExecSql {
     string SqlStr = 1;
+    ExecType OptType = 2;
+    string Args = 3;
 }
 
-message ExecSqlReply {
+message ExecSqlForJSONReply {
     string Result = 1;
 }
