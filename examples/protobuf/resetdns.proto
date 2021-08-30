@@ -1,0 +1,13 @@
+syntax = "proto3";
+// protoc: v.17.3
+option go_package = "../../protoc;protoc";
+
+// protoc: v3.6.1 
+// package protoc;
+
+message ResetDns {
+    string Dns = 1;
+    int32 MaxLifetime = 2;
+    int32 MaxOpenConns = 3;
+    int32 MaxIdleConns = 4;
+}

@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2021-08-29 10:06:22
+ * @LastEditTime: 2021-08-30 22:18:41
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -27,8 +27,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fengyily/yoyoecs/protoc"
 	"github.com/fengyily/yoyoecs/protocols"
 	"github.com/fengyily/yoyoecs/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 /**
@@ -394,6 +396,33 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 
 	err = cs.SendData(data)
 	return
+}
+
+/**
+ * @Description:
+ *
+ *				ResetDbDNS 设置 数据库连接字符串
+ *
+ * @Date: 2021-08-30 22:18:24
+ * @param {string} dns
+ * @param {*} maxLifetime
+ * @param {*} maxOpenConns
+ * @param {int32} maxIdleConns
+ */
+func (cs *ClientSocket) ResetDbDNS(dns string, maxLifetime, maxOpenConns, maxIdleConns int32) error {
+	pb := &protoc.ResetDns{
+		Dns:          dns,
+		MaxLifetime:  maxLifetime,
+		MaxOpenConns: maxOpenConns,
+		MaxIdleConns: maxIdleConns,
+	}
+
+	data, err := proto.Marshal(pb)
+	if err != nil {
+		return err
+	}
+	cs.SendMessage(protocols.RESET_DB_DNS_CMD, protocols.HEADER_FLAG_DATA_TYPE_PB, data)
+	return nil
 }
 
 /**

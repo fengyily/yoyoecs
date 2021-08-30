@@ -2,7 +2,7 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2021-08-29 11:06:27
+ * @LastEditTime: 2021-08-30 22:04:48
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
@@ -46,6 +46,8 @@ const (
 	HTTP_REQUEST_REPLY        Command = 211 //　HTTP请求返回
 	SQL_REQUEST_CMD           Command = 112 // SQL 请求
 	SQL_REQUEST_REPLY         Command = 212 // SQL 请求响应
+	RESET_DB_DNS_CMD          Command = 113 // 重置 DNS
+	RESET_DB_DNS_REPLY        Command = 213 // 重置 DNS 响应
 )
 
 /**
