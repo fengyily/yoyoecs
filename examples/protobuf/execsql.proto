@@ -16,7 +16,7 @@ enum ExecType {
 message ExecSql {
     string SqlStr = 1;
     ExecType OptType = 2;
-    string Args = 3;
+    repeated string Args = 3;
 }
 
 message ExecSqlForJSONReply {
