@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2021-08-30 22:18:41
+ * @LastEditTime: 2021-09-03 07:39:15
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -44,19 +44,20 @@ import (
  * @Date: 2020-07-21 11:18:46
  */
 type ClientSocket struct {
-	isReConnect   bool
-	ConnectId     string
-	RemoteAddr    string
-	IsConnected   bool
-	ipAddress     string
-	conn          *net.Conn
-	OnConnect     func(string, *ClientSocket)
-	OnRecvMessage func(protocols.Header, []byte, *ClientSocket)
-	OnClose       func(string)
-	OnError       func(*ClientSocket)
-	OnConnError   func(error)
-	OnRecvError   func(error)
-	OnSendError   func(error)
+	isReConnect     bool
+	ConnectId       string
+	RemoteAddr      string
+	IsConnected     bool
+	ipAddress       string
+	conn            *net.Conn
+	OnConnect       func(string, *ClientSocket)
+	OnRecvMessage   func(protocols.Header, []byte, *ClientSocket)
+	OnSendToMessage func(string, *protoc.SendTo, *ClientSocket)
+	OnClose         func(string)
+	OnError         func(*ClientSocket)
+	OnConnError     func(error)
+	OnRecvError     func(error)
+	OnSendError     func(error)
 
 	DataChan     chan []byte
 	Buffer       []byte
@@ -296,8 +297,6 @@ func (cs *ClientSocket) read() {
 				if !ok {
 					fmt.Println("加载头部失败。。。")
 					break
-				} else {
-					//fmt.Println("加载头部成功：", header.Length, header.Cmd)
 				}
 
 				if header.Cmd == protocols.REQUEST_HEARTBEAT {
@@ -333,14 +332,25 @@ func (cs *ClientSocket) read() {
 						cs.Buffer = cs.Buffer[i+protocols.HEADER_LENGTH+int(header.Length):]
 						if cs.OnRecvMessage != nil {
 							if header.Flag&protocols.HEADER_FLAG_IS_COMPRESS > 0 {
-
-								//fmt.Println("收到消息：开启了压缩,解压前", len(data))
+								fmt.Println("收到消息：开启了压缩,解压前", len(data))
 								data = utils.UnCompress(data)
-								//fmt.Println("收到消息：开启了压缩,解压后", len(data))
+								fmt.Println("收到消息：开启了压缩,解压后", len(data))
 								header.Length = uint32(len(data))
 							}
-							cs.OnRecvMessage(header, data, cs)
-
+							if header.Cmd == protocols.REQUEST_SENDTO_CMD {
+								if cs.OnSendToMessage != nil {
+									// 消息转发
+									sendTo := protoc.SendTo{}
+									err := proto.Unmarshal(data, &sendTo)
+									if err != nil {
+										fmt.Println("proto.Unmarshal(b, &sendTo)", err)
+										return
+									}
+									cs.OnSendToMessage(sendTo.CID, &sendTo, cs)
+								}
+							} else {
+								cs.OnRecvMessage(header, data, cs)
+							}
 						}
 
 						continue
@@ -373,6 +383,29 @@ func (cs *ClientSocket) read() {
  * @Return:err error
  */
 func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, body []byte) (err error) {
+	data, initerr := cs.InitMessage(cmd, flag, body)
+	if nil == initerr {
+		err = cs.SendData(data)
+	} else {
+		err = initerr
+	}
+	return
+}
+
+func (cs *ClientSocket) SendToMessage(sn string, body []byte) (err error) {
+	tranMsg := protoc.SendTo{
+		CID:  sn,
+		Data: body,
+	}
+	d, err := proto.Marshal(&tranMsg)
+	if err != nil {
+		return
+	}
+	sendTo, _ := cs.InitMessage(protocols.REQUEST_SENDTO_CMD, protocols.HEADER_FLAG_IS_COMPRESS|protocols.HEADER_FLAG_DATA_TYPE_PB, d)
+	return cs.SendData(sendTo)
+}
+
+func (cs *ClientSocket) InitMessage(cmd protocols.Command, flag protocols.Flag, body []byte) (data []byte, err error) {
 	header := protocols.Header{}
 	header.Cmd = cmd
 	header.Flag = flag
@@ -383,18 +416,13 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 		fmt.Println("发送消息：开启了压缩,压缩后", len(body))
 	}
 
-	var data []byte
 	if body != nil {
 		header.Length = uint32(len(body))
 		data = header.ToBytes()
 		data = append(data, body...)
-		//fmt.Println("SendMessage cmd", cmd, "length", header.Length, len(data))
 	} else {
 		data = header.ToBytes()
-		//fmt.Println("SendMessage cmd", cmd, "length nil", header.Length, len(data))
 	}
-
-	err = cs.SendData(data)
 	return
 }
 

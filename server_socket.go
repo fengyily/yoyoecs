@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2021-08-28 15:34:26
+ * @LastEditTime: 2021-09-03 07:37:17
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -27,6 +27,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fengyily/yoyoecs/protoc"
 	"github.com/fengyily/yoyoecs/protocols"
 	"github.com/fengyily/yoyoecs/utils"
 )
@@ -45,12 +46,13 @@ type ServerSocket struct {
 	shutdown bool
 	conn     *net.TCPListener
 
-	OnConnect     func(string, *ClientSocket)
-	OnRecvMessage func(protocols.Header, []byte, *ClientSocket)
-	OnClose       func(string)
-	OnError       func(*ClientSocket)
-	OnRecvError   func(error)
-	OnSendError   func(error)
+	OnConnect       func(string, *ClientSocket)
+	OnRecvMessage   func(protocols.Header, []byte, *ClientSocket)
+	OnSendToMessage func(string, protocols.Header, []byte, *ClientSocket)
+	OnClose         func(string)
+	OnError         func(*ClientSocket)
+	OnRecvError     func(error)
+	OnSendError     func(error)
 
 	// 广播消息时的队列
 	DataChan chan []byte
@@ -104,6 +106,11 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 			c := &ClientSocket{
 				RemoteAddr:    cip,
 				OnRecvMessage: server.OnRecvMessage,
+				OnSendToMessage: func(sn string, sendTo *protoc.SendTo, cs *ClientSocket) {
+					fmt.Println(" server 收到了消息转发 SN:", cs.ConnectId, "send to :", sendTo.CID, "长度：", len(sendTo.Data))
+					server.SendToByClientId(sendTo.CID, sendTo.Data)
+					//server.OnSendToMessage(server.conn.Addr().String(), header, b, cs)
+				},
 				OnError: func(cs *ClientSocket) {
 					if server.OnError != nil {
 						server.OnError(cs)
@@ -261,7 +268,20 @@ func (server *ServerSocket) send() {
 func (server *ServerSocket) SendByClientId(clientId string, cmd protocols.Command, flag protocols.Flag, data []byte) (err error) {
 	client, ok := server.Clients[clientId]
 	if ok {
-		client.SendMessage(cmd, flag, data)
+		err = client.SendMessage(cmd, flag, data)
+		fmt.Println("SendByClientId client.SendMessage(cmd, flag, data)", err)
+	} else {
+		err = errors.New("连接不存在啊，你确定它的状态是对的吗？")
+	}
+
+	return
+}
+
+func (server *ServerSocket) SendToByClientId(clientId string, data []byte) (err error) {
+	client, ok := server.Clients[clientId]
+	if ok {
+		err = client.SendData(data)
+		fmt.Println("SendToByClientId client.SendData(data)", err)
 	} else {
 		err = errors.New("连接不存在啊，你确定它的状态是对的吗？")
 	}

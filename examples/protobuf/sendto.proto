@@ -1,0 +1,11 @@
+syntax = "proto3";
+// protoc: v.17.3
+option go_package = "../../protoc;protoc";
+
+// protoc: v3.6.1 
+// package protoc;
+
+message SendTo {
+    string CID = 1;
+    bytes Data = 2;
+}

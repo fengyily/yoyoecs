@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2021-08-29 10:39:17
+ * @LastEditTime: 2021-09-02 22:22:12
  * @Description: 客户端测试
  */
 package main
@@ -31,26 +31,24 @@ func main() {
 	}
 	client.OnRecvMessage = func(header protocols.Header, data []byte, cs *yoyoecs.ClientSocket) {
 		fmt.Println("-----------------------------------------------------------", time.Now())
-		fmt.Println("成功收到消息：", header.Cmd, "长度：", header.Length, "Flag", fmt.Sprintf("%08b", header.Flag), string(data))
+		fmt.Println("成功收到消息：", header.Cmd, "长度：", header.Length, "Flag", fmt.Sprintf("%08b", header.Flag), string(data), "SN:", cs.ConnectId)
 		fmt.Println("-----------------------------------------------------------", time.Now())
 
 		if header.Cmd == protocols.RESPONSE_REGISTER_SUCCESS {
 			fmt.Println("收到注册成功消息")
-
-			//test(cs)
 		}
 	}
 
 	client.OnConnect = func(ip string, cs *yoyoecs.ClientSocket) {
 		// 采用ＰＢ上传ＳＫＵ信息的示例
 		info := protoc.Register{}
-		info.CompanyID = 123456789
-		info.ShopCode = "shopcode123456789测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈测试的哈"
+		info.SN = "123"
+		info.ShopCode = "456"
 		d, _ := proto.Marshal(&info)
-		client.SendMessage(protocols.REQUEST_REGISTER, protocols.HEADER_FLAG_IS_COMPRESS|protocols.HEADER_FLAG_DATA_TYPE_JSON, d)
+		client.SendMessage(protocols.REQUEST_REGISTER, protocols.HEADER_FLAG_IS_COMPRESS|protocols.HEADER_FLAG_DATA_TYPE_PB, d)
 		fmt.Println("发起了注册申请")
 	}
-	client.Conn("192.168.3.24:9091")
+	client.Conn("127.0.0.1:9091")
 
 	sw := sync.WaitGroup{}
 	sw.Add(1)

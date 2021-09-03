@@ -2,7 +2,7 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2021-08-30 22:04:48
+ * @LastEditTime: 2021-09-02 21:07:05
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
@@ -40,8 +40,12 @@ const (
 	REQUEST_REGISTER          Command = 1   // 边缘端向服务端注册
 	RESPONSE_REGISTER_SUCCESS Command = 101 // 注册响应 成功
 	RESPONSE_REGISTER_FAILED  Command = 201 // 注册响应 成功
-	REQUEST_EXEC_CMD          Command = 110
-	RESPONAE_EXEC_CMD_REPLY   Command = 210 //
+	REQUEST_SENDTO_CMD        Command = 102 // 1 - 1 发消息
+	REQUEST_SENDTO_REPLY      Command = 202 // 1 - 1 消息响应
+	REQUEST_CAST_MSG_CMD      Command = 103 // 广播消息
+	REQUEST_CAST_MSG_REPLY    Command = 203 // 广播响应
+	REQUEST_EXEC_CMD          Command = 110 // Shell 脚本执行
+	RESPONAE_EXEC_CMD_REPLY   Command = 210 // Shell 脚本执行响应
 	HTTP_REQUEST_CMD          Command = 111 // 发起ＨＴＴＰ请求
 	HTTP_REQUEST_REPLY        Command = 211 //　HTTP请求返回
 	SQL_REQUEST_CMD           Command = 112 // SQL 请求
