@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2021-09-02 22:35:37
+ * @LastEditTime: 2021-09-06 23:36:45
  * @Description: 客户端测试
  */
 package main
@@ -45,7 +45,7 @@ func main() {
 			}
 			d, _ := proto.Marshal(&execCmd)
 			target, _ := cs.InitMessage(protocols.REQUEST_EXEC_CMD, protocols.HEADER_FLAG_IS_COMPRESS|protocols.HEADER_FLAG_DATA_TYPE_PB, d)
-			cs.SendToMessage("123", target)
+			cs.SendToMessage("123", 3, target)
 			fmt.Println("发送完成 中转消息。。。。。")
 		}
 	}

@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2021-09-03 07:39:15
+ * @LastEditTime: 2021-09-06 23:36:21
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -392,10 +392,21 @@ func (cs *ClientSocket) SendMessage(cmd protocols.Command, flag protocols.Flag, 
 	return
 }
 
-func (cs *ClientSocket) SendToMessage(sn string, body []byte) (err error) {
+/**
+ * @Description:
+ *
+ *				SendToMessage
+ *
+ * @Date: 2021-09-06 23:37:03
+ * @param {string} sn
+ * @param {time.Duration} 单位：秒
+ * @param {[]byte} body
+ */
+func (cs *ClientSocket) SendToMessage(sn string, timeout time.Duration, body []byte) (err error) {
 	tranMsg := protoc.SendTo{
-		CID:  sn,
-		Data: body,
+		CID:     sn,
+		Timeout: int32(timeout),
+		Data:    body,
 	}
 	d, err := proto.Marshal(&tranMsg)
 	if err != nil {
