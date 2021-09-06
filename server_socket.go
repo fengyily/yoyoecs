@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2021-09-03 07:37:17
+ * @LastEditTime: 2021-09-06 23:03:49
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -21,6 +21,7 @@
 package yoyoecs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -31,6 +32,12 @@ import (
 	"github.com/fengyily/yoyoecs/protocols"
 	"github.com/fengyily/yoyoecs/utils"
 )
+
+var syncMessage map[string]chan []byte
+
+func init() {
+	syncMessage = make(map[string]chan []byte)
+}
 
 /**
  * @Title: ServerSocket
@@ -104,12 +111,39 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 			fmt.Println(cip, "连接成功。")
 
 			c := &ClientSocket{
-				RemoteAddr:    cip,
-				OnRecvMessage: server.OnRecvMessage,
+				RemoteAddr: cip,
+				OnRecvMessage: func(h protocols.Header, d []byte, cs *ClientSocket) {
+					if h.Cmd != protocols.REQUEST_HEARTBEAT {
+						if _, ok := syncMessage[cs.ConnectId]; ok {
+							syncData, _ := cs.InitMessage(h.Cmd, h.Flag, d)
+							syncMessage[cs.ConnectId] <- syncData
+							return
+						}
+					}
+					server.OnRecvMessage(h, d, cs)
+				},
 				OnSendToMessage: func(sn string, sendTo *protoc.SendTo, cs *ClientSocket) {
 					fmt.Println(" server 收到了消息转发 SN:", cs.ConnectId, "send to :", sendTo.CID, "长度：", len(sendTo.Data))
 					server.SendToByClientId(sendTo.CID, sendTo.Data)
-					//server.OnSendToMessage(server.conn.Addr().String(), header, b, cs)
+					syncMessage[sendTo.CID] = make(chan []byte)
+					go func() {
+						if sendTo.Timeout > 60 {
+							sendTo.Timeout = 60
+						}
+						ctx, _ := context.WithTimeout(context.TODO(), time.Duration(sendTo.Timeout)*time.Second)
+						fmt.Println(fmt.Sprintf("同步消息，在此等待:%s 回应", sendTo.CID))
+						select {
+						case d := <-syncMessage[sendTo.CID]:
+							fmt.Println("收到同步返回的消息，长度为：", len(d))
+							cs.SendData(d)
+						case <-ctx.Done():
+							fmt.Println("超时退出")
+							cs.SendMessage(protocols.TIMEOUT, protocols.HEADER_FLAG_DATA_TYPE_PB, nil)
+						}
+
+						fmt.Println("任务完成，将同步消息删除")
+						defer delete(syncMessage, sendTo.CID)
+					}()
 				},
 				OnError: func(cs *ClientSocket) {
 					if server.OnError != nil {

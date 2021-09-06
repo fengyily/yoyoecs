@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2021-09-02 22:22:12
+ * @LastEditTime: 2021-09-06 23:01:43
  * @Description: 客户端测试
  */
 package main
@@ -36,6 +36,29 @@ func main() {
 
 		if header.Cmd == protocols.RESPONSE_REGISTER_SUCCESS {
 			fmt.Println("收到注册成功消息")
+		}
+		if header.Cmd == protocols.REQUEST_EXEC_CMD {
+			shellCmd := &protoc.ShellCmd{}
+			err := proto.Unmarshal(data, shellCmd)
+			if err != nil {
+				fmt.Println("REQUEST_EXEC_CMD:proto.Unmarshal(data, shellCmd) err:", err.Error())
+				return
+			}
+
+			fmt.Println(shellCmd.Command)
+
+			output := "already exec command:" + shellCmd.Command
+			fmt.Println(shellCmd.Command, "done")
+			reply := &protoc.ShellExecReply{}
+			reply.Result = output
+			body, err := proto.Marshal(reply)
+			if err == nil {
+				//err = cs.SendMessage(protocols.RESPONAE_EXEC_CMD_REPLY, protocols.HEADER_FLAG_DATA_TYPE_PB&protocols.HEADER_FLAG_IS_COMPRESS, body)
+
+				fmt.Printf("Reply success, err:%v %#v %v\r\n", err, reply, body)
+			} else {
+				fmt.Println("Reply failed, proto.Marshal(reply) err:", err.Error())
+			}
 		}
 	}
 

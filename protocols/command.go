@@ -2,7 +2,7 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2021-09-06 19:58:53
+ * @LastEditTime: 2021-09-06 22:57:58
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
@@ -54,6 +54,7 @@ const (
 	SQL_REQUEST_REPLY         Command = 212 // SQL 请求响应
 	RESET_DB_DNS_CMD          Command = 113 // 重置 DNS
 	RESET_DB_DNS_REPLY        Command = 213 // 重置 DNS 响应
+	TIMEOUT                   Command = 249 // 超时啦
 )
 
 // Enum value maps for Command.
@@ -76,6 +77,7 @@ var (
 		212: "SQL_REQUEST_REPLY",
 		113: "RESET_DB_DNS_CMD",
 		213: "RESET_DB_DNS_REPLY",
+		249: "TIMEOUT",
 	}
 )
 
