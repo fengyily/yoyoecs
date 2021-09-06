@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-15 09:36:41
  * @LastEditors: F1
- * @LastEditTime: 2021-09-02 22:26:37
+ * @LastEditTime: 2021-09-06 19:57:50
  * @Description: 服务端的测示例
  */
 package main
@@ -20,6 +20,8 @@ import (
 )
 
 func main() {
+
+	fmt.Println(fmt.Sprintf("test:%s %d", protocols.REQUEST_CAST_MSG_REPLY, protocols.REQUEST_CAST_MSG_REPLY))
 	server := &yoyoecs.ServerSocket{}
 	server.OnConnect = func(ip string, cs *yoyoecs.ClientSocket) {
 		fmt.Println(ip, "客户端连接成功了", cs.ConnectId)

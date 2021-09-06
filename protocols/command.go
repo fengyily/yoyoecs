@@ -2,7 +2,7 @@
  * protocols 协议包
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
- * @LastEditTime: 2021-09-02 21:07:05
+ * @LastEditTime: 2021-09-06 19:58:53
  * @LastEditors: F1
  * @Description: 协议包中指令部份，目前支持0-255的指令定义
  *
@@ -13,6 +13,8 @@ package protocols
 import (
 	"reflect"
 	"strconv"
+
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 /**
@@ -53,6 +55,37 @@ const (
 	RESET_DB_DNS_CMD          Command = 113 // 重置 DNS
 	RESET_DB_DNS_REPLY        Command = 213 // 重置 DNS 响应
 )
+
+// Enum value maps for Command.
+var (
+	Command_name = map[int32]string{
+		0:   "REQUEST_HEARTBEAT",
+		100: "RESPONSE_HEARTBEAT",
+		1:   "REQUEST_REGISTER",
+		101: "RESPONSE_REGISTER_SUCCESS",
+		201: "RESPONSE_REGISTER_FAILED",
+		102: "REQUEST_SENDTO_CMD",
+		202: "REQUEST_SENDTO_REPLY",
+		103: "REQUEST_CAST_MSG_CMD",
+		203: "REQUEST_CAST_MSG_REPLY",
+		110: "REQUEST_EXEC_CMD",
+		210: "RESPONAE_EXEC_CMD_REPLY",
+		111: "HTTP_REQUEST_CMD",
+		211: "HTTP_REQUEST_REPLY",
+		112: "SQL_REQUEST_CMD",
+		212: "SQL_REQUEST_REPLY",
+		113: "RESET_DB_DNS_CMD",
+		213: "RESET_DB_DNS_REPLY",
+	}
+)
+
+func (x Command) String() string {
+	return Command_name[int32(x.Number())]
+}
+
+func (x Command) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
 
 /**
  * @Title: IsCommandType
