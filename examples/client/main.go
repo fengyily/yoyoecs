@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2021-09-06 23:01:43
+ * @LastEditTime: 2021-09-07 21:30:57
  * @Description: 客户端测试
  */
 package main
@@ -53,7 +53,7 @@ func main() {
 			reply.Result = output
 			body, err := proto.Marshal(reply)
 			if err == nil {
-				//err = cs.SendMessage(protocols.RESPONAE_EXEC_CMD_REPLY, protocols.HEADER_FLAG_DATA_TYPE_PB&protocols.HEADER_FLAG_IS_COMPRESS, body)
+				err = cs.SendMessage(protocols.RESPONAE_EXEC_CMD_REPLY, protocols.HEADER_FLAG_DATA_TYPE_PB&protocols.HEADER_FLAG_IS_COMPRESS, body)
 
 				fmt.Printf("Reply success, err:%v %#v %v\r\n", err, reply, body)
 			} else {

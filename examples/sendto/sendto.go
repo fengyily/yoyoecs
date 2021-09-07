@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2021-09-06 23:36:45
+ * @LastEditTime: 2021-09-07 21:31:36
  * @Description: 客户端测试
  */
 package main
@@ -18,6 +18,7 @@ import (
 	"github.com/fengyily/yoyoecs/protoc"
 	"github.com/fengyily/yoyoecs/protocols"
 	"github.com/fengyily/yoyoecs/utils"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -33,7 +34,17 @@ func main() {
 		fmt.Println("-----------------------------------------------------------", time.Now())
 		fmt.Println("成功收到消息：", header.Cmd, "长度：", header.Length, "Flag", fmt.Sprintf("%08b", header.Flag), string(data), "SN:", cs.ConnectId)
 		fmt.Println("-----------------------------------------------------------", time.Now())
+		if header.Cmd == protocols.REQUEST_SENDTO_REPLY {
+			reply := protoc.SendToReply{}
+			proto.Unmarshal(data, &reply)
 
+			fmt.Println(reply.Seq)
+
+			r := protoc.ShellExecReply{}
+			proto.Unmarshal(reply.Data, &r)
+
+			fmt.Println(r)
+		}
 		if header.Cmd == protocols.RESPONSE_REGISTER_SUCCESS {
 			fmt.Println("收到注册成功消息")
 
@@ -45,8 +56,9 @@ func main() {
 			}
 			d, _ := proto.Marshal(&execCmd)
 			target, _ := cs.InitMessage(protocols.REQUEST_EXEC_CMD, protocols.HEADER_FLAG_IS_COMPRESS|protocols.HEADER_FLAG_DATA_TYPE_PB, d)
-			cs.SendToMessage("123", 3, target)
-			fmt.Println("发送完成 中转消息。。。。。")
+			seq := uuid.New().String()
+			cs.SendToMessage("123", seq, 3, target)
+			fmt.Println("发送完成 中转消息。。。。。", seq)
 		}
 	}
 

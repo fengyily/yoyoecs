@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-14 21:16:18
  * @LastEditors: F1
- * @LastEditTime: 2021-09-06 23:03:49
+ * @LastEditTime: 2021-09-07 21:24:07
  * @Description:
  *
  *				yoyoecs　主要应用场景是边缘端与云端通讯时，采用socket来同步数据，该项目主要为底层协议及通讯实现。应最大限度的避开业务逻辑。
@@ -31,6 +31,7 @@ import (
 	"github.com/fengyily/yoyoecs/protoc"
 	"github.com/fengyily/yoyoecs/protocols"
 	"github.com/fengyily/yoyoecs/utils"
+	"github.com/golang/protobuf/proto"
 )
 
 var syncMessage map[string]chan []byte
@@ -115,15 +116,14 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 				OnRecvMessage: func(h protocols.Header, d []byte, cs *ClientSocket) {
 					if h.Cmd != protocols.REQUEST_HEARTBEAT {
 						if _, ok := syncMessage[cs.ConnectId]; ok {
-							syncData, _ := cs.InitMessage(h.Cmd, h.Flag, d)
-							syncMessage[cs.ConnectId] <- syncData
+							syncMessage[cs.ConnectId] <- d
 							return
 						}
 					}
 					server.OnRecvMessage(h, d, cs)
 				},
 				OnSendToMessage: func(sn string, sendTo *protoc.SendTo, cs *ClientSocket) {
-					fmt.Println(" server 收到了消息转发 SN:", cs.ConnectId, "send to :", sendTo.CID, "长度：", len(sendTo.Data))
+					fmt.Println(" server 收到了消息转发 SN:", cs.ConnectId, "send to :", sendTo.CID, "seq:", sendTo.Seq, "长度：", len(sendTo.Data))
 					server.SendToByClientId(sendTo.CID, sendTo.Data)
 					syncMessage[sendTo.CID] = make(chan []byte)
 					go func() {
@@ -131,11 +131,17 @@ func (server *ServerSocket) Run(address string) (ok bool, err error) {
 							sendTo.Timeout = 60
 						}
 						ctx, _ := context.WithTimeout(context.TODO(), time.Duration(sendTo.Timeout)*time.Second)
+
+						reply := protoc.SendToReply{
+							Seq: sendTo.Seq,
+						}
 						fmt.Println(fmt.Sprintf("同步消息，在此等待:%s 回应", sendTo.CID))
 						select {
-						case d := <-syncMessage[sendTo.CID]:
-							fmt.Println("收到同步返回的消息，长度为：", len(d))
-							cs.SendData(d)
+						case reply.Data = <-syncMessage[sendTo.CID]:
+							d, _ := proto.Marshal(&reply)
+							replyData, _ := cs.InitMessage(protocols.REQUEST_SENDTO_REPLY, protocols.HEADER_FLAG_DATA_TYPE_PB, d)
+							fmt.Println("收到同步返回的消息，长度为：", len(replyData))
+							cs.SendData(replyData)
 						case <-ctx.Done():
 							fmt.Println("超时退出")
 							cs.SendMessage(protocols.TIMEOUT, protocols.HEADER_FLAG_DATA_TYPE_PB, nil)

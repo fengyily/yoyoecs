@@ -7,6 +7,12 @@ option go_package = "../../protoc;protoc";
 
 message SendTo {
     string CID = 1;
-    int32 Timeout = 2;
-    bytes Data = 3;
+    string Seq = 2;
+    int32 Timeout = 3;
+    bytes Data = 4;
+}
+
+message SendToReply {
+    string Seq = 1;
+    bytes Data = 2;
 }
