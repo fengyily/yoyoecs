@@ -2,7 +2,7 @@
  * @Author: F1
  * @Date: 2020-07-21 11:47:32
  * @LastEditors: F1
- * @LastEditTime: 2021-09-07 21:30:57
+ * @LastEditTime: 2021-09-08 22:43:18
  * @Description: 客户端测试
  */
 package main
@@ -65,7 +65,7 @@ func main() {
 	client.OnConnect = func(ip string, cs *yoyoecs.ClientSocket) {
 		// 采用ＰＢ上传ＳＫＵ信息的示例
 		info := protoc.Register{}
-		info.SN = "123"
+		info.SN = "1423920059583"
 		info.ShopCode = "456"
 		d, _ := proto.Marshal(&info)
 		client.SendMessage(protocols.REQUEST_REGISTER, protocols.HEADER_FLAG_IS_COMPRESS|protocols.HEADER_FLAG_DATA_TYPE_PB, d)
